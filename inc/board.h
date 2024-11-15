@@ -1,12 +1,7 @@
 #pragma once
-#include "piece.h"
 #include "classes.h"
 
-enum BoardColor
-{
-    WHITE,
-    BLACK
-};
+class Piece;
 
 class Board
 {
@@ -39,4 +34,5 @@ public:
     BoardColor getSquareColor(char col, int row);
     void displayBoardConsole();
     Square *getSquare(char col, int row);
+    void displayBoardPositions();
 };

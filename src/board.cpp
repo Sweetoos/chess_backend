@@ -71,11 +71,11 @@ void Board::displayBoardConsole()
         {
             Piece *piece = m_square[c][r]->getPiece();
             if (piece)
-                std::cout << piece->getPieceAcronym() << '\t';
+                std::cout << piece->getPieceColor() << piece->getPieceAcronym() << '\t';
             else
             {
                 BoardColor color = m_square[c][r]->getColor();
-                std::cout << ((color == WHITE) ? "White" : "Black") << '\t';
+                std::cout << ((color == BoardColor::WHITE) ? "White" : "Black") << '\t';
             }
         }
         std::cout << '\n';
@@ -110,4 +110,17 @@ void Board::Square::setPiece(Piece *piece)
 Piece *Board::Square::getPiece()
 {
     return m_piece;
+}
+
+void Board::displayBoardPositions()
+{
+    for (char col = 'A'; col <= 'H'; col++)
+    {
+        for (int row = 1; row <= 8; row++)
+        {
+            std::cout << col << row << ' ';
+        }
+        std::cout << '\n';
+    }
+    std::cout << '\n';
 }

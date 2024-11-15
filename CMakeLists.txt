@@ -7,6 +7,8 @@ add_executable(run
     src/board.cpp
     src/main.cpp
     src/bishop.cpp
+    src/piece.cpp
+    src/queen.cpp
 )
 
 target_include_directories(run PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)

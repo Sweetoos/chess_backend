@@ -4,5 +4,6 @@
 int main()
 {
     Board board;
+    board.displayBoardPositions();
     board.displayBoardConsole();
 }
