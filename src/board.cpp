@@ -39,6 +39,10 @@ void Board::initPieces()
 
     Piece *cBlackBishop = new Bishop(PieceColor::BLACK, *this, 'C', 8);
     Piece *fBlackBishop = new Bishop(PieceColor::BLACK, *this, 'F', 8);
+    
+    //Queens
+    Piece *WhiteQueen=new Queen(PieceColor::WHITE, *this,'E',1);
+    Piece *BlackQueen=new Queen(PieceColor::BLACK, *this,'E',8);
 }
 
 void Board::setBoardColors()
