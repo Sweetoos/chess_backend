@@ -9,6 +9,10 @@ add_executable(run
     src/bishop.cpp
     src/piece.cpp
     src/queen.cpp
+    src/king.cpp
+    src/knight.cpp
+    src/pawn.cpp
+    src/rook.cpp
 )
 
 target_include_directories(run PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
