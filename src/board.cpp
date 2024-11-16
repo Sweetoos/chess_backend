@@ -41,8 +41,8 @@ void Board::initPieces()
     Piece *fBlackBishop = new Bishop(PieceColor::BLACK, *this, 'F', 8);
     
     //Queens
-    Piece *WhiteQueen=new Queen(PieceColor::WHITE, *this,'E',1);
-    Piece *BlackQueen=new Queen(PieceColor::BLACK, *this,'E',8);
+    Piece *WhiteQueen=new Queen(PieceColor::WHITE, *this,'D',1);
+    Piece *BlackQueen=new Queen(PieceColor::BLACK, *this,'D',8);
 }
 
 void Board::setBoardColors()
@@ -69,7 +69,7 @@ BoardColor Board::getSquareColor(char col, int row)
 
 void Board::displayBoardConsole()
 {
-    for (int r = 1; r <= 8; r++)
+    for (int r = 8; r >= 1; r--)
     {
         for (int c = 1; c <= 8; c++)
         {
@@ -118,13 +118,24 @@ Piece *Board::Square::getPiece()
 
 void Board::displayBoardPositions()
 {
-    for (char col = 'A'; col <= 'H'; col++)
+    std::cout << "\n   A\tB\tC\tD\tE\tF\tG\tH\n";
+
+    for (int r = 8; r >= 1; r--) 
     {
-        for (int row = 1; row <= 8; row++)
+        std::cout << r << " ";
+        for (int c = 1; c <= 8; c++)
         {
-            std::cout << col << row << ' ';
+            Piece *piece = m_square[c][r]->getPiece();
+            if (piece)
+                std::cout << piece->getPieceColor() << piece->getPieceAcronym() << '\t';
+            else
+            {
+                BoardColor color = m_square[c][r]->getColor();
+                std::cout << ((color == BoardColor::WHITE) ? " . " : " . ") << '\t';
+            }
         }
-        std::cout << '\n';
+        std::cout << " " << r << '\n';
     }
-    std::cout << '\n';
+
+    std::cout << "   A\tB\tC\tD\tE\tF\tG\tH\n";
 }
