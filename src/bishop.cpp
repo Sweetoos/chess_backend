@@ -1,10 +1,7 @@
 #include "classes.h"
 #include "bishop.h"
 
-Bishop::Bishop(PieceColor color, Board &board, char col, int row):Piece(color)
-{
-    putPiece(board.getSquare(col,row));
-}
+
 
 char Bishop::getPieceAcronym()
 {

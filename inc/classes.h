@@ -14,6 +14,7 @@ enum class BoardColor
 
 #include "board.h"
 #include "piece.h"
+#include "factory.h"
 #include "bishop.h"
 #include "queen.h"
 #include "king.h"

@@ -10,9 +10,11 @@ protected:
     char m_pieceAcronym;
     bool m_canJump = false;
     PieceColor m_color;
+    char m_col;
+    int m_row;
 
 public:
-    Piece(PieceColor color) : m_color(color) {} // m_square(nullptr),
+    Piece(PieceColor color, char col, int row) : m_color(color), m_col(col), m_row(row) {} // m_square(nullptr)
     virtual ~Piece() = default;
     virtual void putPiece(Board::Square *square) = 0;
     virtual void checkAvailableSquares(Board board) = 0;
@@ -27,5 +29,8 @@ public:
     void setSquare(Board::Square *square) { m_square = square; }
     Board::Square *getSquare() { return m_square; }
     PieceColor getPieceColor() const { return m_color; }
+    void setPosition(char col, int row);
+    char getColumn() const {return m_col;}
+    int getRow() const {return m_row;}
 
 };

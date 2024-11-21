@@ -33,6 +33,7 @@ Board::~Board()
 
 void Board::initPieces()
 {
+    //do list of all pieces
     // Rooks
     Piece *aWhiteRook = new Rook(PieceColor::WHITE, *this, 'A', 1);
     Piece *hWhiteRook = new Rook(PieceColor::WHITE, *this, 'H', 1);
