@@ -1,10 +1,5 @@
 #include "rook.h"
 
-Rook::Rook(PieceColor color, Board &board, char col, int row):Piece(color)
-{
-    putPiece(board.getSquare(col,row));
-}
-
 char Rook::getPieceAcronym()
 {
     return m_acronym;

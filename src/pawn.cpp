@@ -1,10 +1,5 @@
 #include "pawn.h"
 
-Pawn::Pawn(PieceColor color, Board &board, char col, int row):Piece(color)
-{
-    putPiece(board.getSquare(col,row));
-}
-
 char Pawn::getPieceAcronym()
 {
     return m_acronym;

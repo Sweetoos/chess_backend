@@ -11,7 +11,7 @@ private:
     bool m_moved;
 
 public:
-    Rook(PieceColor color, Board &board, char col, int row);
+    Rook(PieceColor color, char col, int row): Piece(color, col,row){}
     // Board::Square &getCurrentPosition(char col, int row);
     // void checkAvailableSquares(Board::Square square);
     char getPieceAcronym() override;

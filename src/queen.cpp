@@ -1,10 +1,5 @@
 #include "queen.h"
 
-Queen::Queen(PieceColor color, Board &board, char col, int row):Piece(color)
-{
-    putPiece(board.getSquare(col,row));
-}
-
 char Queen::getPieceAcronym()
 {
     return m_acronym;

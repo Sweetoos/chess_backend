@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <iostream>
+#include "board.h"
 #include "classes.h"
 
 class Piece

@@ -5,6 +5,7 @@
 
 Board::Board()
 {
+
     for (int c = 1; c <= 8; c++)
     {
         for (int r = 1; r <= 8; r++)
@@ -25,63 +26,77 @@ Board::~Board()
     {
         for (int r = 1; r <= 8; r++)
         {
-            delete m_square[c][r]->getPiece();
             delete m_square[c][r];
         }
     }
+    for (auto piece : m_pieces)
+        delete piece;
 }
 
 void Board::initPieces()
 {
-    //do list of all pieces
-    // Rooks
-    Piece *aWhiteRook = new Rook(PieceColor::WHITE, *this, 'A', 1);
-    Piece *hWhiteRook = new Rook(PieceColor::WHITE, *this, 'H', 1);
+    // factories
+    BishopFactory bishopFactory;
+    RookFactory rookFactory;
+    QueenFactory queenFactory;
+    KnightFactory knightFactory;
+    PawnFactory pawnFactory;
+    KingFactory kingFactory;
 
-    Piece *aBlackRook = new Rook(PieceColor::BLACK, *this, 'A', 8);
-    Piece *hBlackRook = new Rook(PieceColor::BLACK, *this, 'H', 8);
-
+    //  Rooks
+    addPiece(rookFactory.createPiece(PieceColor::WHITE, 'A', 1));
+    addPiece(rookFactory.createPiece(PieceColor::WHITE, 'H', 1));
+    addPiece(rookFactory.createPiece(PieceColor::BLACK, 'A', 8));
+    addPiece(rookFactory.createPiece(PieceColor::BLACK, 'H', 8));
+    
     // Knights
-    Piece *bWhiteKnight = new Knight(PieceColor::WHITE, *this, 'B', 1);
-    Piece *gWhiteKnight = new Knight(PieceColor::WHITE, *this, 'G', 1);
-
-    Piece *bBlackKnight = new Knight(PieceColor::BLACK, *this, 'B', 8);
-    Piece *gBlackKnight = new Knight(PieceColor::BLACK, *this, 'G', 8);
+    addPiece(knightFactory.createPiece(PieceColor::WHITE, 'B', 1));
+    addPiece(knightFactory.createPiece(PieceColor::WHITE, 'G', 1));
+    addPiece(knightFactory.createPiece(PieceColor::BLACK, 'B', 8));
+    addPiece(knightFactory.createPiece(PieceColor::BLACK, 'G', 8));
 
     // Bishops
-    Piece *cWhiteBishop = new Bishop(PieceColor::WHITE, *this, 'C', 1);
-    Piece *fWhiteBishop = new Bishop(PieceColor::WHITE, *this, 'F', 1);
+    addPiece(bishopFactory.createPiece(PieceColor::WHITE, 'C', 1));
+    addPiece(bishopFactory.createPiece(PieceColor::WHITE, 'F', 1));
+    addPiece(bishopFactory.createPiece(PieceColor::BLACK, 'C', 8));
+    addPiece(bishopFactory.createPiece(PieceColor::BLACK, 'F', 8));
 
-    Piece *cBlackBishop = new Bishop(PieceColor::BLACK, *this, 'C', 8);
-    Piece *fBlackBishop = new Bishop(PieceColor::BLACK, *this, 'F', 8);
-    
+
     // Queens
-    Piece *WhiteQueen=new Queen(PieceColor::WHITE, *this,'D',1);
-    Piece *BlackQueen=new Queen(PieceColor::BLACK, *this,'D',8);
+    addPiece(queenFactory.createPiece(PieceColor::WHITE, 'D', 1));
+    addPiece(queenFactory.createPiece(PieceColor::BLACK, 'D', 8));
 
     // Kings
-    Piece *WhiteKing=new King(PieceColor::WHITE, *this,'E',1);
-    Piece *BlackKing=new King(PieceColor::BLACK, *this,'E',8);
+    addPiece(kingFactory.createPiece(PieceColor::WHITE, 'E', 1));
+    addPiece(kingFactory.createPiece(PieceColor::BLACK, 'E', 8));
 
-    //White pawns
-    Piece *aWhitePawn = new Pawn(PieceColor::WHITE, *this, 'A', 2);
-    Piece *bWhitePawn = new Pawn(PieceColor::WHITE, *this, 'B', 2);
-    Piece *cWhitePawn = new Pawn(PieceColor::WHITE, *this, 'C', 2);
-    Piece *dWhitePawn = new Pawn(PieceColor::WHITE, *this, 'D', 2);
-    Piece *eWhitePawn = new Pawn(PieceColor::WHITE, *this, 'E', 2);
-    Piece *fWhitePawn = new Pawn(PieceColor::WHITE, *this, 'F', 2);
-    Piece *gWhitePawn = new Pawn(PieceColor::WHITE, *this, 'G', 2);
-    Piece *hWhitePawn = new Pawn(PieceColor::WHITE, *this, 'H', 2);
+    // White pawns
+    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'A', 2));
+    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'B', 2));
+    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'C', 2));
+    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'D', 2));
+    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'E', 2));
+    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'F', 2));
+    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'G', 2));
+    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'H', 2));
 
-    //Black pawns
-    Piece *aBlackPawn = new Pawn(PieceColor::BLACK, *this, 'A', 7);
-    Piece *bBlackPawn = new Pawn(PieceColor::BLACK, *this, 'B', 7);
-    Piece *cBlackPawn = new Pawn(PieceColor::BLACK, *this, 'C', 7);
-    Piece *dBlackPawn = new Pawn(PieceColor::BLACK, *this, 'D', 7);
-    Piece *eBlackPawn = new Pawn(PieceColor::BLACK, *this, 'E', 7);
-    Piece *fBlackPawn = new Pawn(PieceColor::BLACK, *this, 'F', 7);
-    Piece *gBlackPawn = new Pawn(PieceColor::BLACK, *this, 'G', 7);
-    Piece *hBlackPawn = new Pawn(PieceColor::BLACK, *this, 'H', 7);
+    // Black pawns
+    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'A', 7));
+    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'B', 7));
+    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'C', 7));
+    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'D', 7));
+    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'E', 7));
+    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'F', 7));
+    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'G', 7));
+    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'H', 7));
+}
+
+void Board::addPiece(Piece *piece)
+{
+    m_pieces.push_back(piece);
+    Square *square = getSquare(piece->getColumn(), piece->getRow());
+    if (square)
+        square->m_piece = piece;
 }
 
 void Board::setBoardColors()
@@ -159,7 +174,7 @@ void Board::displayBoardPositions()
 {
     std::cout << "\n   A\tB\tC\tD\tE\tF\tG\tH\n";
 
-    for (int r = 8; r >= 1; r--) 
+    for (int r = 8; r >= 1; r--)
     {
         std::cout << r << " ";
         for (int c = 1; c <= 8; c++)

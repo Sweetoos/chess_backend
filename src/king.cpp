@@ -1,10 +1,5 @@
 #include "king.h"
 
-King::King(PieceColor color, Board &board, char col, int row):Piece(color)
-{
-    putPiece(board.getSquare(col, row));
-}
-
 char King::getPieceAcronym()
 {
     return m_acronym;

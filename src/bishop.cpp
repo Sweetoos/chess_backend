@@ -1,8 +1,6 @@
 #include "classes.h"
 #include "bishop.h"
 
-
-
 char Bishop::getPieceAcronym()
 {
     return m_acronym;

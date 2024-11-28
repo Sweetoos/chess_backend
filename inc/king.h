@@ -10,7 +10,7 @@ private:
     std::string m_pieceName = "King";
 
 public:
-    King(PieceColor color, Board &board, char col, int row);
+    King(PieceColor color, char col, int row): Piece(color, col,row){}
     // Board::Square &getCurrentPosition(char col, int row);
     // void checkAvailableSquares(Board::Square square);
     char getPieceAcronym() override;

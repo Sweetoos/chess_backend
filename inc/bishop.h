@@ -1,5 +1,6 @@
 #pragma once
 #include "classes.h"
+#include "piece.h"
 #include <string>
 
 class Bishop : public Piece
@@ -10,7 +11,7 @@ private:
     std::string m_pieceName = "Bishop";
 
 public:
-    Bishop(PieceColor color, char col, int row): Piece(color, col,row){}
+    Bishop(PieceColor color, char col, int row) : Piece(color, col, row) {}
     // Board::Square &getCurrentPosition(char col, int row);
     // void checkAvailableSquares(Board::Square square);
     char getPieceAcronym() override;
