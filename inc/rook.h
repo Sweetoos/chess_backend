@@ -1,5 +1,6 @@
 #pragma once
 #include "classes.h"
+#include "piece.h"
 #include <string>
 
 class Rook : public Piece
@@ -11,13 +12,12 @@ private:
     bool m_moved;
 
 public:
-    Rook(PieceColor color, char col, int row): Piece(color, col,row){}
+    Rook(PieceColor color, char col, int row) : Piece(color, col, row) {}
     // Board::Square &getCurrentPosition(char col, int row);
     // void checkAvailableSquares(Board::Square square);
     char getPieceAcronym() override;
     int getValue();
-    void putPiece(Board::Square *square) override;
-    void checkAvailableSquares(Board board) override;
+    // void checkAvailableSquares(Board board) override;
     bool canJump() override;
     std::string getPieceName() override { return m_pieceName; }
 };

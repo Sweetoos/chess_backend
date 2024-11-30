@@ -3,7 +3,6 @@
 #include <list>
 #include "factory.h"
 
-class Piece;
 
 class Board
 {
@@ -24,8 +23,7 @@ public:
 
 private:
     Square *m_square[9][9];
-    std::list<Piece *> m_pieces;
-    BoardColor m_color;
+    //BoardColor m_color;
 
 public:
     Board();

@@ -1,4 +1,5 @@
 #include "classes.h"
+#include "piece.h"
 #include "board.h"
 #include <iostream>
 #include <string>
@@ -29,75 +30,59 @@ Board::~Board()
             delete m_square[c][r];
         }
     }
-    for (auto piece : m_pieces)
-        delete piece;
 }
 
 void Board::initPieces()
 {
-    // factories
-    BishopFactory bishopFactory;
-    RookFactory rookFactory;
-    QueenFactory queenFactory;
-    KnightFactory knightFactory;
-    PawnFactory pawnFactory;
-    KingFactory kingFactory;
 
-    //  Rooks
-    addPiece(rookFactory.createPiece(PieceColor::WHITE, 'A', 1));
-    addPiece(rookFactory.createPiece(PieceColor::WHITE, 'H', 1));
-    addPiece(rookFactory.createPiece(PieceColor::BLACK, 'A', 8));
-    addPiece(rookFactory.createPiece(PieceColor::BLACK, 'H', 8));
-    
+    // Rooks
+    PieceFactory::createPiece('R',PieceColor::WHITE, 'A', 1);
+    PieceFactory::createPiece('R',PieceColor::WHITE, 'H', 1);
+    PieceFactory::createPiece('R',PieceColor::BLACK, 'A', 8);
+    PieceFactory::createPiece('R',PieceColor::BLACK, 'H', 8);
+
     // Knights
-    addPiece(knightFactory.createPiece(PieceColor::WHITE, 'B', 1));
-    addPiece(knightFactory.createPiece(PieceColor::WHITE, 'G', 1));
-    addPiece(knightFactory.createPiece(PieceColor::BLACK, 'B', 8));
-    addPiece(knightFactory.createPiece(PieceColor::BLACK, 'G', 8));
+    PieceFactory::createPiece('N',PieceColor::WHITE, 'B', 1);
+    PieceFactory::createPiece('N',PieceColor::WHITE, 'G', 1);
+    PieceFactory::createPiece('N',PieceColor::BLACK, 'B', 8);
+    PieceFactory::createPiece('N',PieceColor::BLACK, 'G', 8);
 
     // Bishops
-    addPiece(bishopFactory.createPiece(PieceColor::WHITE, 'C', 1));
-    addPiece(bishopFactory.createPiece(PieceColor::WHITE, 'F', 1));
-    addPiece(bishopFactory.createPiece(PieceColor::BLACK, 'C', 8));
-    addPiece(bishopFactory.createPiece(PieceColor::BLACK, 'F', 8));
-
+    PieceFactory::createPiece('B',PieceColor::WHITE, 'C', 1);
+    PieceFactory::createPiece('B',PieceColor::WHITE, 'F', 1);
+    PieceFactory::createPiece('B',PieceColor::BLACK, 'C', 8);
+    PieceFactory::createPiece('B',PieceColor::BLACK, 'F', 8);
 
     // Queens
-    addPiece(queenFactory.createPiece(PieceColor::WHITE, 'D', 1));
-    addPiece(queenFactory.createPiece(PieceColor::BLACK, 'D', 8));
+    PieceFactory::createPiece('Q',PieceColor::WHITE, 'D', 1);
+    PieceFactory::createPiece('Q',PieceColor::BLACK, 'D', 8);
 
     // Kings
-    addPiece(kingFactory.createPiece(PieceColor::WHITE, 'E', 1));
-    addPiece(kingFactory.createPiece(PieceColor::BLACK, 'E', 8));
-
+    PieceFactory::createPiece('K',PieceColor::WHITE, 'E', 1);
+    PieceFactory::createPiece('K',PieceColor::BLACK, 'E', 8);
+    
     // White pawns
-    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'A', 2));
-    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'B', 2));
-    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'C', 2));
-    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'D', 2));
-    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'E', 2));
-    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'F', 2));
-    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'G', 2));
-    addPiece(pawnFactory.createPiece(PieceColor::WHITE, 'H', 2));
+    PieceFactory::createPiece(' ',PieceColor::WHITE, 'A', 2);
+    PieceFactory::createPiece(' ',PieceColor::WHITE, 'B', 2);
+    PieceFactory::createPiece(' ',PieceColor::WHITE, 'C', 2);
+    PieceFactory::createPiece(' ',PieceColor::WHITE, 'D', 2);
+    PieceFactory::createPiece(' ',PieceColor::WHITE, 'E', 2);
+    PieceFactory::createPiece(' ',PieceColor::WHITE, 'F', 2);
+    PieceFactory::createPiece(' ',PieceColor::WHITE, 'G', 2);
+    PieceFactory::createPiece(' ',PieceColor::WHITE, 'H', 2);
 
     // Black pawns
-    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'A', 7));
-    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'B', 7));
-    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'C', 7));
-    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'D', 7));
-    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'E', 7));
-    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'F', 7));
-    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'G', 7));
-    addPiece(pawnFactory.createPiece(PieceColor::BLACK, 'H', 7));
+    PieceFactory::createPiece(' ',PieceColor::BLACK, 'A', 7);
+    PieceFactory::createPiece(' ',PieceColor::BLACK, 'B', 7);
+    PieceFactory::createPiece(' ',PieceColor::BLACK, 'C', 7);
+    PieceFactory::createPiece(' ',PieceColor::BLACK, 'D', 7);
+    PieceFactory::createPiece(' ',PieceColor::BLACK, 'E', 7);
+    PieceFactory::createPiece(' ',PieceColor::BLACK, 'F', 7);
+    PieceFactory::createPiece(' ',PieceColor::BLACK, 'G', 7);
+    PieceFactory::createPiece(' ',PieceColor::BLACK, 'H', 7);
 }
 
-void Board::addPiece(Piece *piece)
-{
-    m_pieces.push_back(piece);
-    Square *square = getSquare(piece->getColumn(), piece->getRow());
-    if (square)
-        square->m_piece = piece;
-}
+
 
 void Board::setBoardColors()
 {
@@ -105,8 +90,7 @@ void Board::setBoardColors()
     {
         for (int row = 1; row <= 8; row++)
         {
-            m_color = ((row + col) % 2 == 0) ? BoardColor::WHITE : BoardColor::BLACK;
-            m_square[col][row]->setColor(m_color);
+            m_square[col][row]->setColor(((row+col)%2==0)? BoardColor::WHITE:BoardColor::BLACK);
         }
     }
 }

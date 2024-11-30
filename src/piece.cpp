@@ -1,5 +1,6 @@
 #include "classes.h"
 #include <iostream>
+#include "piece.h"
 
 std::ostream &operator<<(std::ostream &os, const PieceColor &color)
 {
@@ -13,4 +14,9 @@ std::ostream &operator<<(std::ostream &os, const PieceColor &color)
         break;
     }
     return os;
+}
+void Piece::putPiece(Board::Square *square)
+{
+    m_square=square;
+    m_square->setPiece(this);
 }

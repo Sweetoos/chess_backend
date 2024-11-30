@@ -6,59 +6,67 @@
 #include "pawn.h"
 #include "knight.h"
 #include "king.h"
+#include <list>
 
 class PieceFactory
 {
-public:
-    virtual Piece *createPiece(PieceColor color, char col, int row) = 0;
-    virtual ~PieceFactory() = default;
-};
+private:
+    static std::list<Piece *> pieces;
 
-class BishopFactory : public PieceFactory
-{
 public:
-    Piece *createPiece(PieceColor color, char row, int col)
+    static Piece *createPiece(char symbol, PieceColor color, char row, int col)
     {
-        return new Bishop(color, col, row);
+        Piece *piece = nullptr;
+        switch (symbol)
+        {
+        case 'B':
+            piece = new Bishop(color, col, row);
+            break;
+        case 'R':
+            piece = new Rook(color, col, row);
+            break;
+        case ' ':
+            piece = new Pawn(color, col, row);
+            break;
+        case 'K':
+            piece = new King(color, col, row);
+            break;
+        case 'N':
+            piece = new Knight(color, col, row);
+            break;
+        case 'Q':
+            piece = new Queen(color, col, row);
+            break;
+        default:
+            return nullptr;
+        }
+
+        if (piece != nullptr)
+            pieces.push_back(piece);
+
+        return piece;
     }
-};
-class RookFactory : public PieceFactory
-{
-public:
-    Piece *createPiece(PieceColor color, char row, int col)
+
+    static void removePiece(Piece *piece)
     {
-        return new Rook(color, col, row);
+        pieces.remove(piece);
+        delete piece;
     }
-};
-class QueenFactory : public PieceFactory
-{
-public:
-    Piece *createPiece(PieceColor color, char row, int col)
+
+    static void clearPieces()
     {
-        return new Queen(color, col, row);
+        for (auto piece : pieces)
+            delete piece;
+        pieces.clear();
     }
-};
-class KnightFactory : public PieceFactory
-{
-public:
-    Piece *createPiece(PieceColor color, char row, int col)
+
+    static const std::list<Piece*> getPieces()
     {
-        return new Knight(color, col, row);
+        return pieces;
     }
-};
-class PawnFactory : public PieceFactory
-{
-public:
-    Piece *createPiece(PieceColor color, char row, int col)
+
+    ~PieceFactory()
     {
-        return new Pawn(color, col, row);
-    }
-};
-class KingFactory : public PieceFactory
-{
-public:
-    Piece *createPiece(PieceColor color, char row, int col)
-    {
-        return new King(color, col, row);
+        clearPieces();
     }
 };

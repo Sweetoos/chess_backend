@@ -15,8 +15,7 @@ public:
     // void checkAvailableSquares(Board::Square square);
     char getPieceAcronym() override;
     int getValue();
-    void putPiece(Board::Square *square) override;
-    void checkAvailableSquares(Board board) override;
+    //void checkAvailableSquares(Board board) override;
     bool canJump() override;
     std::string getPieceName() override { return m_pieceName; }
 };
