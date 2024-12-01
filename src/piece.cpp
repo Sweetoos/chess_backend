@@ -14,3 +14,8 @@ std::ostream &operator<<(std::ostream &os, const PieceColor &color)
     }
     return os;
 }
+void Piece::putPiece(Board::Square *square)
+{
+    m_square=square;
+    m_square->setPiece(this);
+}
