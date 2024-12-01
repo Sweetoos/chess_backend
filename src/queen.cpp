@@ -1,4 +1,4 @@
-#include "queen.h"
+#include "classes.h"
 
 char Queen::getPieceAcronym()
 {

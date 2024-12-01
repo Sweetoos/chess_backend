@@ -1,4 +1,4 @@
-#include "knight.h"
+#include "classes.h"
 
 char Knight::getPieceAcronym()
 {

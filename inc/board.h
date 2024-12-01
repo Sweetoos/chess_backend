@@ -1,8 +1,8 @@
 #pragma once
 #include "classes.h"
 #include <list>
-#include "factory.h"
 
+class Piece;
 
 class Board
 {
@@ -28,8 +28,8 @@ private:
 public:
     Board();
     ~Board();
+    void putPiece(int col, int row, Piece *piece);
     void initPieces();
-    void addPiece(Piece *piece);
     void setBoardColors();
     void displayBoardConsole();
     BoardColor getSquareColor(char col, int row);

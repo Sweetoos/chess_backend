@@ -1,5 +1,4 @@
 #include "classes.h"
-#include "bishop.h"
 
 char Bishop::getPieceAcronym()
 {

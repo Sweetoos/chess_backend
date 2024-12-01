@@ -1,8 +1,10 @@
 #pragma once
-#include "board.h"
 #include <string>
 #include <iostream>
+#include "piece.h"
 #include "classes.h"
+
+class Board;
 
 class Piece
 {

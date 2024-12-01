@@ -1,4 +1,4 @@
-#include "pawn.h"
+#include "classes.h"
 
 char Pawn::getPieceAcronym()
 {

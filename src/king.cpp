@@ -1,4 +1,4 @@
-#include "king.h"
+#include "classes.h"
 
 char King::getPieceAcronym()
 {

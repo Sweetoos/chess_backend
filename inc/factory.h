@@ -1,11 +1,5 @@
 #pragma once
 #include "classes.h"
-#include "bishop.h"
-#include "rook.h"
-#include "queen.h"
-#include "pawn.h"
-#include "knight.h"
-#include "king.h"
 #include <list>
 
 class PieceFactory
@@ -14,7 +8,7 @@ private:
     static std::list<Piece *> pieces;
 
 public:
-    static Piece *createPiece(char symbol, PieceColor color, char row, int col)
+    static Piece *createPiece(char symbol, PieceColor color, char col, int row)
     {
         Piece *piece = nullptr;
         switch (symbol)

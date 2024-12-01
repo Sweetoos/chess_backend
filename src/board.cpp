@@ -1,9 +1,10 @@
 #include "classes.h"
-#include "piece.h"
-#include "board.h"
 #include <iostream>
 #include <string>
+#include <list>
+#include "board.h"
 
+std::list<Piece*> PieceFactory::pieces;
 Board::Board()
 {
 
@@ -32,57 +33,41 @@ Board::~Board()
     }
 }
 
-void Board::initPieces()
+/// @brief put piece on the board
+void Board::putPiece(int col, int row, Piece *piece)
 {
-
-    // Rooks
-    PieceFactory::createPiece('R',PieceColor::WHITE, 'A', 1);
-    PieceFactory::createPiece('R',PieceColor::WHITE, 'H', 1);
-    PieceFactory::createPiece('R',PieceColor::BLACK, 'A', 8);
-    PieceFactory::createPiece('R',PieceColor::BLACK, 'H', 8);
-
-    // Knights
-    PieceFactory::createPiece('N',PieceColor::WHITE, 'B', 1);
-    PieceFactory::createPiece('N',PieceColor::WHITE, 'G', 1);
-    PieceFactory::createPiece('N',PieceColor::BLACK, 'B', 8);
-    PieceFactory::createPiece('N',PieceColor::BLACK, 'G', 8);
-
-    // Bishops
-    PieceFactory::createPiece('B',PieceColor::WHITE, 'C', 1);
-    PieceFactory::createPiece('B',PieceColor::WHITE, 'F', 1);
-    PieceFactory::createPiece('B',PieceColor::BLACK, 'C', 8);
-    PieceFactory::createPiece('B',PieceColor::BLACK, 'F', 8);
-
-    // Queens
-    PieceFactory::createPiece('Q',PieceColor::WHITE, 'D', 1);
-    PieceFactory::createPiece('Q',PieceColor::BLACK, 'D', 8);
-
-    // Kings
-    PieceFactory::createPiece('K',PieceColor::WHITE, 'E', 1);
-    PieceFactory::createPiece('K',PieceColor::BLACK, 'E', 8);
-    
-    // White pawns
-    PieceFactory::createPiece(' ',PieceColor::WHITE, 'A', 2);
-    PieceFactory::createPiece(' ',PieceColor::WHITE, 'B', 2);
-    PieceFactory::createPiece(' ',PieceColor::WHITE, 'C', 2);
-    PieceFactory::createPiece(' ',PieceColor::WHITE, 'D', 2);
-    PieceFactory::createPiece(' ',PieceColor::WHITE, 'E', 2);
-    PieceFactory::createPiece(' ',PieceColor::WHITE, 'F', 2);
-    PieceFactory::createPiece(' ',PieceColor::WHITE, 'G', 2);
-    PieceFactory::createPiece(' ',PieceColor::WHITE, 'H', 2);
-
-    // Black pawns
-    PieceFactory::createPiece(' ',PieceColor::BLACK, 'A', 7);
-    PieceFactory::createPiece(' ',PieceColor::BLACK, 'B', 7);
-    PieceFactory::createPiece(' ',PieceColor::BLACK, 'C', 7);
-    PieceFactory::createPiece(' ',PieceColor::BLACK, 'D', 7);
-    PieceFactory::createPiece(' ',PieceColor::BLACK, 'E', 7);
-    PieceFactory::createPiece(' ',PieceColor::BLACK, 'F', 7);
-    PieceFactory::createPiece(' ',PieceColor::BLACK, 'G', 7);
-    PieceFactory::createPiece(' ',PieceColor::BLACK, 'H', 7);
+    if (row < 1 || row > 8 || col < 1 || col > 8)
+    {
+        throw std::out_of_range("Incorrect square index (putPiece)");
+    }
+    m_square[col][row]->setPiece(piece);
 }
 
+/// @brief initialize all pieces on the board
+void Board::initPieces()
+{
+    // white pawns
+    for (char col = 'A'; col <= 'H'; col++)
+    {
+        int numericCol = col - 'A' + 1; 
+        putPiece(numericCol, 2, PieceFactory::createPiece(' ', PieceColor::WHITE, col, 2));
+    }
 
+    // black pawns
+    for (char col = 'A'; col <= 'H'; col++)
+    {
+        int numericCol = col - 'A' + 1; 
+        putPiece(numericCol, 7, PieceFactory::createPiece(' ', PieceColor::BLACK, col, 7));
+    }
+
+    // figures
+    char pieces[] = {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'};
+    for (int i = 0; i < 8; i++)
+    {
+        putPiece(i + 1, 1, PieceFactory::createPiece(pieces[i], PieceColor::WHITE, 'A' + i, 1));
+        putPiece(i + 1, 8, PieceFactory::createPiece(pieces[i], PieceColor::BLACK, 'A' + i, 8));
+    }
+}
 
 void Board::setBoardColors()
 {
@@ -100,7 +85,7 @@ BoardColor Board::getSquareColor(char col, int row)
     int colInt = col - 'A' + 1;
     if (row < 1 || row > 8 || colInt < 1 || colInt > 8)
     {
-        throw std::out_of_range("Incorrect square index");
+        throw std::out_of_range("Incorrect square index (getSquareColor)");
     }
     return m_square[colInt][row]->getColor();
 }
@@ -129,7 +114,7 @@ Board::Square *Board::getSquare(char col, int row)
     int colInt = col - 'A' + 1;
     if (row < 1 || row > 8 || colInt < 1 || colInt > 8)
     {
-        throw std::out_of_range("Incorrect square index");
+        throw std::out_of_range("Incorrect square index (getSquare)");
     }
     return m_square[colInt][row];
 }
