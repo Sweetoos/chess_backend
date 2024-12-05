@@ -21,5 +21,6 @@ enum class BoardColor
 #include "pawn.h"
 #include "rook.h"
 #include "factory.h"
+#include "chess.h"
 
 std::ostream &operator<<(std::ostream &os, const PieceColor &color);

@@ -20,7 +20,7 @@ public:
     Piece(PieceColor color, char col, int row) : m_color(color), m_col(col), m_row(row) {} // m_square(nullptr)
     virtual ~Piece() = default;
     void putPiece(Board::Square *square);
-    //virtual void checkAvailableSquares(Board board) = 0;
+    // virtual void checkAvailableSquares(Board board) = 0;
     virtual char getPieceAcronym() = 0;
 
     /// @brief not all pieces can jump like knight

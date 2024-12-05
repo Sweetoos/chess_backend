@@ -3,11 +3,11 @@
 #include <string>
 #include <list>
 #include "board.h"
+#include <array>
 
-std::list<Piece*> PieceFactory::pieces;
+std::list<Piece *> PieceFactory::pieces;
 Board::Board()
 {
-
     for (int c = 1; c <= 8; c++)
     {
         for (int r = 1; r <= 8; r++)
@@ -49,14 +49,14 @@ void Board::initPieces()
     // white pawns
     for (char col = 'A'; col <= 'H'; col++)
     {
-        int numericCol = col - 'A' + 1; 
+        int numericCol = col - 'A' + 1;
         putPiece(numericCol, 2, PieceFactory::createPiece(' ', PieceColor::WHITE, col, 2));
     }
 
     // black pawns
     for (char col = 'A'; col <= 'H'; col++)
     {
-        int numericCol = col - 'A' + 1; 
+        int numericCol = col - 'A' + 1;
         putPiece(numericCol, 7, PieceFactory::createPiece(' ', PieceColor::BLACK, col, 7));
     }
 
@@ -75,7 +75,7 @@ void Board::setBoardColors()
     {
         for (int row = 1; row <= 8; row++)
         {
-            m_square[col][row]->setColor(((row+col)%2==0)? BoardColor::WHITE:BoardColor::BLACK);
+            m_square[col][row]->setColor(((row + col) % 2 == 0) ? BoardColor::WHITE : BoardColor::BLACK);
         }
     }
 }
@@ -102,7 +102,7 @@ void Board::displayBoardConsole()
             else
             {
                 BoardColor color = m_square[c][r]->getColor();
-                std::cout << ((color == BoardColor::WHITE) ? "White" : "Black") << '\t';
+                std::cout << ((color == BoardColor::WHITE) ? "Black" : "White") << '\t';
             }
         }
         std::cout << '\n';
