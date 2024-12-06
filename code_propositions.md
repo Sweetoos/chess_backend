@@ -1,163 +1,210 @@
 ```cpp
-// board.h
-#pragma once
+#include <iostream>
 #include <vector>
 #include <memory>
+#include <string>
 #include <stdexcept>
-#include "piece.h"
 
-enum class BoardColor { WHITE, BLACK };
+// Klasa Point (pomocnicza do przechowywania pozycji)
+struct Point {
+    int x, y;
+    Point(int x, int y) : x(x), y(y) {}
+};
 
-class Board {
+// Interfejs IChessPiece (czysto wirtualna klasa)
+class IChessPiece {
 public:
-    // Klasa wewnętrzna Square
-    class Square {
-        char m_col;
-        int m_row;
-        BoardColor m_color;
-        std::shared_ptr<Piece> m_piece;
+    virtual ~IChessPiece() = default;
+    virtual void move(const Point& target) = 0;
+    virtual void capture(const Point& target) = 0;
+    virtual const Point& getPosition() const = 0;
+    virtual const std::string& getColor() const = 0;
+    virtual int getValue() const = 0;       // Wartość punktowa
+    virtual std::string getNotation() const = 0; // Litera (lub pusta dla pionka)
+};
 
+// Klasa abstrakcyjna AbstractPiece
+class AbstractPiece : public IChessPiece {
+protected:
+    Point position;
+    std::string color;  // "white" lub "black"
+    int value;          // Wartość punktowa (0 dla króla)
+    std::string notation; // Litera w notacji angielskiej
+
+public:
+    AbstractPiece(const Point& startPosition, const std::string& color, int value, const std::string& notation)
+        : position(startPosition), color(color), value(value), notation(notation) {}
+
+    const Point& getPosition() const override {
+        return position;
+    }
+
+    const std::string& getColor() const override {
+        return color;
+    }
+
+    int getValue() const override {
+        return value;
+    }
+
+    std::string getNotation() const override {
+        return notation;
+    }
+
+    virtual void move(const Point& target) override {
+        position = target;
+        std::cout << "Moved to " << target.x << ", " << target.y << "\n";
+    }
+
+    virtual void capture(const Point& target) override {
+        position = target;
+        std::cout << "Captured at " << target.x << ", " << target.y << "\n";
+    }
+};
+
+// Klasa Pawn (dziedziczenie, brak litery w notacji)
+class Pawn : public AbstractPiece {
+public:
+    Pawn(const Point& startPosition, const std::string& color)
+        : AbstractPiece(startPosition, color, 1, "") {}
+
+    void promotion() {
+        std::cout << "Pawn promoted at " << position.x << ", " << position.y << "\n";
+    }
+
+    void move(const Point& target) override {
+        AbstractPiece::move(target);
+    }
+};
+
+// Klasa Queen (dziedziczenie, litera Q, wartość 9)
+class Queen : public AbstractPiece {
+public:
+    Queen(const Point& startPosition, const std::string& color)
+        : AbstractPiece(startPosition, color, 9, "Q") {}
+};
+
+// Klasa King (dziedziczenie, brak wartości, litera K)
+class King : public AbstractPiece {
+public:
+    King(const Point& startPosition, const std::string& color)
+        : AbstractPiece(startPosition, color, 0, "K") {}
+};
+
+// Klasa Knight (dziedziczenie, litera N, wartość 3)
+class Knight : public AbstractPiece {
+public:
+    Knight(const Point& startPosition, const std::string& color)
+        : AbstractPiece(startPosition, color, 3, "N") {}
+};
+
+// Fabryka abstrakcyjna PieceFactory
+class PieceFactory {
+public:
+    // Klasa wewnętrzna InnerPieceFactory
+    class InnerPieceFactory {
     public:
-        Square(char col, int row, BoardColor color)
-            : m_col(col), m_row(row), m_color(color), m_piece(nullptr) {}
+        std::unique_ptr<IChessPiece> createPawn(const Point& position, const std::string& color) {
+            return std::make_unique<Pawn>(position, color);
+        }
 
-        void setPiece(std::shared_ptr<Piece> piece) { m_piece = piece; }
-        std::shared_ptr<Piece> getPiece() const { return m_piece; }
-        BoardColor getColor() const { return m_color; }
-        char getColumn() const { return m_col; }
-        int getRow() const { return m_row; }
+        std::unique_ptr<IChessPiece> createQueen(const Point& position, const std::string& color) {
+            return std::make_unique<Queen>(position, color);
+        }
+
+        std::unique_ptr<IChessPiece> createKing(const Point& position, const std::string& color) {
+            return std::make_unique<King>(position, color);
+        }
+
+        std::unique_ptr<IChessPiece> createKnight(const Point& position, const std::string& color) {
+            return std::make_unique<Knight>(position, color);
+        }
     };
 
-private:
-    std::vector<std::vector<std::shared_ptr<Square>>> m_squares;
-
-public:
-    Board();
-    Square* getSquare(char col, int row);
-    void displayBoard() const;
-    void placePiece(char col, int row, std::shared_ptr<Piece> piece);
-    void initializeDefaultSetup();
+    virtual ~PieceFactory() = default;
+    virtual std::unique_ptr<IChessPiece> createPiece(const std::string& type, const Point& position, const std::string& color) = 0;
 };
 
-```
+// Fabryka konkretna ConcretePieceFactory
+class ConcretePieceFactory : public PieceFactory {
+public:
+    std::unique_ptr<IChessPiece> createPiece(const std::string& type, const Point& position, const std::string& color) override {
+        InnerPieceFactory factory;
+        if (type == "Pawn") return factory.createPawn(position, color);
+        if (type == "Queen") return factory.createQueen(position, color);
+        if (type == "King") return factory.createKing(position, color);
+        if (type == "Knight") return factory.createKnight(position, color);
+        throw std::invalid_argument("Unknown piece type");
+    }
+};
 
-```cpp
-//board.cpp
-#include "board.h"
-#include <iostream>
+// Klasa ChessBoard (plansza)
+class ChessBoard {
+private:
+    std::vector<std::vector<std::unique_ptr<IChessPiece>>> grid;
 
-Board::Board() {
-    for (char col = 'A'; col <= 'H'; ++col) {
-        std::vector<std::shared_ptr<Square>> column;
-        for (int row = 1; row <= 8; ++row) {
-            BoardColor color = ((col - 'A') + row) % 2 == 0 ? BoardColor::WHITE : BoardColor::BLACK;
-            column.push_back(std::make_shared<Square>(col, row, color));
+public:
+    ChessBoard() : grid(8, std::vector<std::unique_ptr<IChessPiece>>(8, nullptr)) {}
+
+    void placePiece(std::unique_ptr<IChessPiece> piece, const Point& position) {
+        grid[position.x][position.y] = std::move(piece);
+        std::cout << "Placed piece at " << position.x << ", " << position.y << "\n";
+    }
+
+    void movePiece(const Point& from, const Point& to) {
+        if (grid[from.x][from.y]) {
+            grid[from.x][from.y]->move(to);
+            grid[to.x][to.y] = std::move(grid[from.x][from.y]);
         }
-        m_squares.push_back(column);
     }
-}
 
-Board::Square* Board::getSquare(char col, int row) {
-    if (col < 'A' || col > 'H' || row < 1 || row > 8) {
-        throw std::out_of_range("Invalid square coordinates");
-    }
-    return m_squares[col - 'A'][row - 1].get();
-}
-
-void Board::placePiece(char col, int row, std::shared_ptr<Piece> piece) {
-    Square* square = getSquare(col, row);
-    square->setPiece(piece);
-}
-
-void Board::displayBoard() const {
-    for (int row = 8; row >= 1; --row) {
-        for (char col = 'A'; col <= 'H'; ++col) {
-            Square* square = m_squares[col - 'A'][row - 1].get();
-            auto piece = square->getPiece();
-            if (piece) {
-                std::cout << piece->getPieceColor() << piece->getPieceAcronym() << " ";
-            } else {
-                std::cout << ". ";
+    void printBoard() {
+        for (int i = 0; i < 8; ++i) {
+            for (int j = 0; j < 8; ++j) {
+                if (grid[i][j]) {
+                    std::cout << grid[i][j]->getNotation() << " ";
+                } else {
+                    std::cout << ". ";
+                }
             }
+            std::cout << "\n";
         }
-        std::cout << std::endl;
-    }
-}
-
-void Board::initializeDefaultSetup() {
-    // Wykorzystaj PieceFactory lub bezpośrednio twórz obiekty figurek
-    // np.:
-    placePiece('A', 2, std::make_shared<Pawn>(PieceColor::WHITE, 'A', 2));
-    // ... Dodaj resztę
-}
-
-```
-
-```cpp
-//piece.h
-#pragma once
-#include <string>
-
-enum class PieceColor { WHITE, BLACK };
-
-class Piece {
-protected:
-    PieceColor m_color;
-    char m_col;
-    int m_row;
-
-public:
-    Piece(PieceColor color, char col, int row)
-        : m_color(color), m_col(col), m_row(row) {}
-    virtual ~Piece() = default;
-
-    virtual char getPieceAcronym() = 0;
-    virtual bool canJump() = 0;
-    virtual std::string getPieceName() = 0;
-
-    PieceColor getPieceColor() const { return m_color; }
-    char getColumn() const { return m_col; }
-    int getRow() const { return m_row; }
-    void setPosition(char col, int row) {
-        m_col = col;
-        m_row = row;
     }
 };
-```
 
-```cpp
-//chess.h
-#pragma once
-#include "board.h"
-
-class Application {
+// Klasa ChessGame (zarządzanie grą)
+class ChessGame {
 private:
-    Board m_board;
+    ChessBoard board;
+    ConcretePieceFactory factory;
 
 public:
-    Application() : m_board() {
-        m_board.initializeDefaultSetup();
+    void start() {
+        std::cout << "Game started\n";
+
+        board.placePiece(factory.createPiece("Pawn", {1, 1}, "white"), {1, 1});
+        board.placePiece(factory.createPiece("Knight", {0, 1}, "white"), {0, 1});
+        board.placePiece(factory.createPiece("Queen", {0, 3}, "white"), {0, 3});
+        board.placePiece(factory.createPiece("King", {0, 4}, "white"), {0, 4});
     }
 
-    void run() {
-        m_board.displayBoard();
-        // Tu można dodać logikę gry
+    void play() {
+        board.movePiece({1, 1}, {2, 1});
+    }
+
+    void end() {
+        std::cout << "Game ended\n";
     }
 };
-```
 
-```cpp
-//main.cpp
-#include "application.h"
-
+// Funkcja główna
 int main() {
-    try {
-        Application app;
-        app.run();
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
+    ChessGame game;
+
+    game.start(); // Rozpoczęcie gry
+    game.play();  // Symulacja rozgrywki
+    game.end();   // Zakończenie gry
+
     return 0;
 }
-
 ```
