@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.18)
-set(CMAKE_CXX_STANDARD 17)
+cmake_minimum_required(VERSION 3.25)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(run)
 
@@ -13,6 +13,8 @@ add_executable(run
     src/knight.cpp
     src/pawn.cpp
     src/rook.cpp
+    src/factory.cpp
+    src/chess.cpp
 )
 
 target_include_directories(run PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)

@@ -12,8 +12,15 @@ enum class BoardColor
     BLACK
 };
 
-#include "board.h"
+struct Position
+{
+    char col;
+    int row;
+    Position(char col, int row) : col(col), row(row) {}
+};
+
 #include "piece.h"
+#include "board.h"
 #include "bishop.h"
 #include "queen.h"
 #include "king.h"
@@ -21,5 +28,6 @@ enum class BoardColor
 #include "pawn.h"
 #include "rook.h"
 #include "factory.h"
+#include "chess.h"
 
 std::ostream &operator<<(std::ostream &os, const PieceColor &color);

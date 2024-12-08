@@ -1,66 +1,67 @@
 #pragma once
-#include "classes.h"
+#include <map>
 #include <list>
+#include <functional>
+#include "classes.h"
 
 class PieceFactory
 {
 private:
-    static std::list<Piece *> pieces;
+    std::list<PieceInterface *> m_pieces; 
+    std::map<std::string, std::function<PieceInterface *(const Position &, const PieceColor &)>> m_creators;
 
 public:
-    static Piece *createPiece(char symbol, PieceColor color, char col, int row)
+    PieceFactory()
     {
-        Piece *piece = nullptr;
-        switch (symbol)
+        m_creators[""] = [](const Position &pos, const PieceColor &color)
         {
-        case 'B':
-            piece = new Bishop(color, col, row);
-            break;
-        case 'R':
-            piece = new Rook(color, col, row);
-            break;
-        case ' ':
-            piece = new Pawn(color, col, row);
-            break;
-        case 'K':
-            piece = new King(color, col, row);
-            break;
-        case 'N':
-            piece = new Knight(color, col, row);
-            break;
-        case 'Q':
-            piece = new Queen(color, col, row);
-            break;
-        default:
-            return nullptr;
-        }
-
-        if (piece != nullptr)
-            pieces.push_back(piece);
-
-        return piece;
-    }
-
-    static void removePiece(Piece *piece)
-    {
-        pieces.remove(piece);
-        delete piece;
-    }
-
-    static void clearPieces()
-    {
-        for (auto piece : pieces)
-            delete piece;
-        pieces.clear();
-    }
-
-    static const std::list<Piece*> getPieces()
-    {
-        return pieces;
+            return new Pawn(color, pos);
+        };
+        m_creators["R"] = [](const Position &pos, const PieceColor &color)
+        {
+            return new Rook(color, pos);
+        };
+        m_creators["N"] = [](const Position &pos, const PieceColor &color)
+        {
+            return new Knight(color, pos);
+        };
+        m_creators["B"] = [](const Position &pos, const PieceColor &color)
+        {
+            return new Bishop(color, pos);
+        };
+        m_creators["K"] = [](const Position &pos, const PieceColor &color)
+        {
+            return new King(color, pos);
+        };
+        m_creators["Q"] = [](const Position &pos, const PieceColor &color)
+        {
+            return new Queen(color, pos);
+        };
     }
 
     ~PieceFactory()
     {
-        clearPieces();
+        for (auto piece : m_pieces)
+        {
+            delete piece;
+        }
     }
+
+    PieceInterface *createAndStorePiece(const std::string &type, const Position &position, const PieceColor &color)
+    {
+        auto it = m_creators.find(type);
+        if (it != m_creators.end())
+        {
+            PieceInterface *piece = it->second(position, color);
+            m_pieces.push_back(piece);
+            return piece;
+        }
+        throw std::invalid_argument("Unknown piece type: " + type);
+    }
+
+    const std::list<PieceInterface *> &getPieces() const
+    {
+        return m_pieces;
+    }
+
 };

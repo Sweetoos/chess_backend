@@ -1,38 +1,38 @@
 #pragma once
 #include "classes.h"
 #include <list>
-
-class Piece;
+#include <array>
 
 class Board
 {
 public:
-    struct Square
+    class Square
     {
-        char m_col;
-        int m_row;
-        Piece *m_piece;
-
+    private:
         BoardColor m_squareColor;
-        Square(char col, int row) : m_col(col), m_row(row), m_piece(nullptr) {}
-        void setColor(const BoardColor &color);
-        BoardColor getColor();
-        void setPiece(Piece *piece);
-        Piece *getPiece();
+        PieceInterface *m_piece;
+
+    public:
+        Square() : m_squareColor(BoardColor::WHITE), m_piece(nullptr) {}
+        Square(BoardColor color) : m_squareColor(color), m_piece(nullptr) {}
+        void setPiece(PieceInterface *piece);
+        PieceInterface *getPiece() const;
+        void clearPiece();
+        BoardColor getColor() const;
     };
 
 private:
-    Square *m_square[9][9];
-    //BoardColor m_color;
+    std::array<std::array<Square,8>,8> m_grid;
 
 public:
     Board();
     ~Board();
-    void putPiece(int col, int row, Piece *piece);
-    void initPieces();
-    void setBoardColors();
-    void displayBoardConsole();
-    BoardColor getSquareColor(char col, int row);
-    Square *getSquare(char col, int row);
-    void displayBoardPositions();
+
+    void putPiece(PieceInterface *piece);
+    void removePiece(const Position &position);
+    PieceInterface *getPieceAt(const Position &position) const;
+    void displayBoardConsole() const;
+
+private:
+    int toIndex(char col) const;
 };

@@ -5,14 +5,13 @@ int main()
 {
     try
     {
-        Board board;
-        board.displayBoardPositions();
-        std::cout << '\n';
-        board.displayBoardConsole();
+        PieceFactory factory;
+        Chess game(factory);
+        game.run();
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        std::cerr <<"Error: "<< e.what() << '\n';
     }
 
 }

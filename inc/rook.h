@@ -2,21 +2,16 @@
 #include "classes.h"
 #include <string>
 
-class Rook : public Piece
+class Rook : public PieceInterface
 {
-private:
-    char m_acronym = 'R';
-    int m_value = 5;
-    std::string m_pieceName = "Rook";
-    bool m_moved;
-
 public:
-    Rook(PieceColor color, char col, int row) : Piece(color, col, row) {}
-    // Board::Square &getCurrentPosition(char col, int row);
-    // void checkAvailableSquares(Board::Square square);
-    char getPieceAcronym() override;
-    int getValue();
-    // void checkAvailableSquares(Board board) override;
-    bool canJump() override;
-    std::string getPieceName() override { return m_pieceName; }
+    Rook(PieceColor color, const Position &position)
+        : PieceInterface(color, 5, "R", position) {}
+    void move(const Position &target) { m_position = target; }
+    void capture(const Position &target) { m_position = target; }
+    const Position &getPosition() const { return m_position; }
+    const PieceColor &getColor() const { return m_color; }
+    int getValue() const { return m_value; }
+    std::string getSymbol() const { return m_symbol; }
+    bool canJump() const { return false; }
 };
