@@ -2,20 +2,25 @@
 #include "classes.h"
 #include <print>
 
-class Chess
+class GameManager
 {
 private:
     Board m_board;
+    PieceFactory &m_factory;
 
 public:
-    Chess() : m_board()
-    {
-        m_board.initPieces();
-    }
-    void run()
-    {
-        m_board.displayBoardPositions();
-        std::println("");
-        m_board.displayBoardConsole();
-    }
+    GameManager(PieceFactory &factory) : m_factory(factory) {}
+    void setupBoard();
+    //void movePiece(const Position &from, const Position &to);
+    void displayBoard() const;
+};
+
+class Chess
+{
+private:
+    GameManager m_gm;
+
+public:
+    Chess(PieceFactory &factory);
+    void run();
 };

@@ -1,38 +1,52 @@
 #pragma once
 #include <string>
 #include <iostream>
-#include "piece.h"
 #include "classes.h"
 
-class Board;
-
-class Piece
+class PieceInterface
 {
 protected:
-    char m_pieceAcronym;
-    bool m_canJump = false;
     PieceColor m_color;
-    char m_col;
-    int m_row;
-    Board::Square *m_square;
+    int m_value;
+    std::string m_symbol;
+    Position m_position;
 
 public:
-    Piece(PieceColor color, char col, int row) : m_color(color), m_col(col), m_row(row) {} // m_square(nullptr)
-    virtual ~Piece() = default;
-    void putPiece(Board::Square *square);
-    // virtual void checkAvailableSquares(Board board) = 0;
-    virtual char getPieceAcronym() = 0;
+    PieceInterface(PieceColor color, int value, const std::string &symbol, const Position &position)
+        : m_color(color), m_value(value), m_symbol(symbol), m_position(position) {}
 
-    /// @brief not all pieces can jump like knight
-    /// @return canJump
-    virtual bool canJump() = 0;
-
-    virtual std::string getPieceName() = 0;
-
-    void setSquare(Board::Square *square) { m_square = square; }
-    Board::Square *getSquare() { return m_square; }
-    PieceColor getPieceColor() const { return m_color; }
-    void setPosition(char col, int row);
-    char getColumn() const { return m_col; }
-    int getRow() const { return m_row; }
+    virtual ~PieceInterface() = default;
+    virtual void move(const Position &target) = 0;
+    virtual void capture(const Position &target) = 0;
+    virtual const Position &getPosition() const = 0;
+    virtual const PieceColor &getColor() const = 0;
+    virtual int getValue() const = 0;
+    virtual std::string getSymbol() const = 0;
+    virtual bool canJump() const = 0;
+    virtual const std::string getFullSymbol() const
+    {
+        return (m_color == PieceColor::WHITE ? "W" : "B") + m_symbol;
+    }
 };
+
+// class Piece : public PieceInterface
+// {
+// protected:
+//     Position m_position;
+//     PieceColor m_color;
+//     int m_value;
+//     std::string m_notation;
+//     bool m_canJump;
+
+// public:
+//     Piece(const Position &startPositon, const PieceColor &color, int value, const std::string &notation)
+//         : m_position(startPositon), m_color(color), m_value(value), m_notation(notation) {}
+
+//     const Position &getPosition() const override;
+//     const PieceColor &getColor() const override;
+//     int getValue() const override;
+//     std::string getNotation() const override;
+//     void move(const Position &target) override;
+//     void capture(const Position &target) override;
+//     bool canJump() const override;
+// };

@@ -13,6 +13,8 @@ add_executable(run
     src/knight.cpp
     src/pawn.cpp
     src/rook.cpp
+    src/factory.cpp
+    src/chess.cpp
 )
 
 target_include_directories(run PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)

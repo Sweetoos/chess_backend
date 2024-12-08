@@ -12,8 +12,15 @@ enum class BoardColor
     BLACK
 };
 
-#include "board.h"
+struct Position
+{
+    char col;
+    int row;
+    Position(char col, int row) : col(col), row(row) {}
+};
+
 #include "piece.h"
+#include "board.h"
 #include "bishop.h"
 #include "queen.h"
 #include "king.h"

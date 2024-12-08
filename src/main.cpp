@@ -5,7 +5,8 @@ int main()
 {
     try
     {
-        Chess game;
+        PieceFactory factory;
+        Chess game(factory);
         game.run();
     }
     catch(const std::exception& e)
