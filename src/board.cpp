@@ -45,6 +45,10 @@ PieceInterface *Board::getPieceAt(const Position &position) const
 {
     int col = toIndex(position.col);
     int row = position.row - 1;
+
+    if (col < 0 || col >= 8 || row < 0 || row >= 8)
+        throw std::out_of_range("Position out of bounds");
+
     return m_grid[col][row].getPiece();
 }
 

@@ -234,3 +234,42 @@ bool Pawn::isValidMove(const Position &from, const Position &to, const Board &bo
     return false;
 }
 
+
+void Chess::run()
+{
+    m_gm.displayBoard();
+    while (true)
+    {
+        std::string fromTo;
+
+        std::cout << "Current turn: " 
+                  << (m_gm.getCurrentTurn() == PieceColor::WHITE ? "White" : "Black") 
+                  << "\n";
+
+        try
+        {
+            // Podaj ruch jako np. "e2e4"
+            std::cout << "Enter your move (e.g., e2e4): ";
+            std::cin >> fromTo;
+
+            if (fromTo.length() != 4)
+                throw std::invalid_argument("Invalid move format. Use format like 'e2e4'.");
+
+            char fromCol = fromTo[0];
+            int fromRow = fromTo[1] - '0';
+            char toCol = fromTo[2];
+            int toRow = fromTo[3] - '0';
+
+            Position from(fromCol, fromRow);
+            Position to(toCol, toRow);
+
+            // Próba wykonania ruchu
+            m_gm.movePiece(from, to);
+            m_gm.displayBoard();
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error: " << e.what() << "\n";
+        }
+    }
+}
