@@ -2,6 +2,10 @@
 #include "classes.h"
 #include "chess.h"
 
+
+/// @brief match turn
+int GameManager::turn=0;
+
 Chess::Chess(PieceFactory &factory) : m_gm(factory)
 {
     m_gm.setupBoard();

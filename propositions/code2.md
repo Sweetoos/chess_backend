@@ -1,239 +1,236 @@
 ```cpp
-#pragma once
-#include <array>
-#include <memory>
-#include "PieceInterface.h"
-#include "Position.h"
-
-class Board {
-public:
-    // Klasa wewnętrzna reprezentująca pole szachownicy
-    class Square {
-    private:
-        PieceInterface *m_piece;
-        bool m_isWhite; // Kolor pola
-
-    public:
-        Square(bool isWhite) : m_piece(nullptr), m_isWhite(isWhite) {}
-
-        void setPiece(PieceInterface *piece) { m_piece = piece; }
-        void clearPiece() { m_piece = nullptr; }
-        PieceInterface *getPiece() const { return m_piece; }
-        bool isWhite() const { return m_isWhite; }
-    };
-
-    using Grid = std::array<std::array<Square, 8>, 8>;
-
+class GameManager
+{
 private:
-    Grid m_grid;
+    Board m_board;
+    PieceColor m_currentTurn = PieceColor::WHITE; // Zaczynają białe
 
 public:
-    Board();
-    void putPiece(std::unique_ptr<PieceInterface> piece, const Position &pos);
-    PieceInterface *getPieceAt(const Position &pos) const;
-    void removePiece(const Position &pos);
-    void displayBoardConsole() const;
-
-private:
-    int toIndex(char col) const { return col - 'A'; }
+    void movePiece(const Position &from, const Position &to);
+    void displayBoard() const { m_board.display(); }
+    PieceColor getCurrentTurn() const { return m_currentTurn; }
 };
 
-#include "Board.h"
-#include <iostream>
+void GameManager::movePiece(const Position &from, const Position &to)
+{
+    PieceInterface *piece = m_board.getPieceAt(from);
 
-Board::Board() {
-    for (int row = 0; row < 8; ++row) {
-        for (int col = 0; col < 8; ++col) {
-            bool isWhite = (row + col) % 2 == 0;
-            m_grid[col][row] = Square(isWhite);
+    if (!piece)
+    {
+        std::cout << "No piece at " << from.col << from.row << "\n";
+        return;
+    }
+
+    if (piece->getColor() != m_currentTurn)
+    {
+        std::cout << "It's not " << (m_currentTurn == PieceColor::WHITE ? "Black" : "White") << "'s turn\n";
+        return;
+    }
+
+    if (!piece->isValidMove(from, to, m_board))
+    {
+        std::cout << "Invalid move for " << piece->getFullSymbol() << "\n";
+        return;
+    }
+
+    PieceInterface *targetPiece = m_board.getPieceAt(to);
+    if (targetPiece)
+    {
+        if (targetPiece->getColor() == piece->getColor())
+        {
+            std::cout << "Cannot capture your own piece\n";
+            return;
+        }
+        std::cout << "Captured " << targetPiece->getFullSymbol() << "\n";
+        m_board.removePiece(to);
+    }
+
+    m_board.removePiece(from);
+    piece->move(to);
+    m_board.putPiece(piece);
+    std::cout << "Moved " << piece->getFullSymbol() << " to " << to.col << to.row << "\n";
+
+    // Zmiana tury
+    m_currentTurn = (m_currentTurn == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
+}
+
+void Chess::run()
+{
+    m_gm.displayBoard();
+    while (true)
+    {
+        char fromCol, toCol;
+        int fromRow, toRow;
+
+        std::cout << "Current turn: " 
+                  << (m_gm.getCurrentTurn() == PieceColor::WHITE ? "White" : "Black") 
+                  << "\n";
+        std::cout << "Enter move (e.g., e2 e4): ";
+        std::cin >> fromCol >> fromRow >> toCol >> toRow;
+
+        try
+        {
+            Position from(fromCol, fromRow);
+            Position to(toCol, toRow);
+            m_gm.movePiece(from, to);
+            m_gm.displayBoard();
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error: " << e.what() << "\n";
         }
     }
 }
 
-void Board::putPiece(std::unique_ptr<PieceInterface> piece, const Position &pos) {
-    int col = toIndex(pos.col);
-    int row = pos.row - 1;
-    m_grid[col][row].setPiece(piece.release());
-}
+//prev
 
-PieceInterface *Board::getPieceAt(const Position &pos) const {
-    int col = toIndex(pos.col);
-    int row = pos.row - 1;
+PieceInterface *Board::getPieceAt(const Position &position) const
+{
+    int col = toIndex(position.col);
+    int row = position.row - 1;
+
+    if (col < 0 || col >= 8 || row < 0 || row >= 8)
+        throw std::out_of_range("Position out of bounds");
+
     return m_grid[col][row].getPiece();
 }
 
-void Board::removePiece(const Position &pos) {
-    int col = toIndex(pos.col);
-    int row = pos.row - 1;
-    m_grid[col][row].clearPiece();
-}
+void Chess::run()
+{
+    m_gm.displayBoard();
+    while (true)
+    {
+        char fromCol, toCol;
+        int fromRow, toRow;
 
-void Board::displayBoardConsole() const {
-    for (int row = 7; row >= 0; --row) {
-        for (int col = 0; col < 8; ++col) {
-            const Square &square = m_grid[col][row];
-            if (PieceInterface *piece = square.getPiece()) {
-                std::cout << "P\t"; // Tylko dla pionka
-            } else {
-                std::cout << (square.isWhite() ? ".\t" : "#\t");
-            }
+        std::cout << "Enter move (e.g., e2 e4): ";
+        std::cin >> fromCol >> fromRow >> toCol >> toRow;
+
+        try
+        {
+            Position from(fromCol, fromRow);
+            Position to(toCol, toRow);
+            m_gm.movePiece(from, to);
+            m_gm.displayBoard();
         }
-        std::cout << "\n";
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error: " << e.what() << "\n";
+        }
     }
 }
 
-#pragma once
+void GameManager::movePiece(const Position &from, const Position &to)
+{
+    PieceInterface *piece = m_board.getPieceAt(from);
 
-enum class PieceColor { WHITE, BLACK };
+    if (!piece)
+    {
+        std::cout << "No piece at " << from.col << from.row << "\n";
+        return;
+    }
 
-struct Position {
-    char col;
-    int row;
-    Position(char c, int r) : col(c), row(r) {}
-};
+    if (!piece->isValidMove(from, to, m_board))
+    {
+        std::cout << "Invalid move for " << piece->getFullSymbol() << "\n";
+        return;
+    }
 
-#pragma once
-#include "Position.h"
+    PieceInterface *targetPiece = m_board.getPieceAt(to);
+    if (targetPiece)
+    {
+        if (targetPiece->getColor() == piece->getColor())
+        {
+            std::cout << "Cannot capture your own piece\n";
+            return;
+        }
+        std::cout << "Captured " << targetPiece->getFullSymbol() << "\n";
+        m_board.removePiece(to);
+    }
 
-class PieceInterface {
+    m_board.removePiece(from);
+    piece->move(to);
+    m_board.putPiece(piece);
+    std::cout << "Moved " << piece->getFullSymbol() << " to " << to.col << to.row << "\n";
+}
+
+bool Rook::isValidMove(const Position &from, const Position &to, const Board &board) const
+{
+    if (from.col != to.col && from.row != to.row)
+        return false;
+
+    int colDir = (from.col == to.col) ? 0 : (to.col > from.col ? 1 : -1);
+    int rowDir = (from.row == to.row) ? 0 : (to.row > from.row ? 1 : -1);
+
+    char col = from.col + colDir;
+    int row = from.row + rowDir;
+
+    while (col != to.col || row != to.row)
+    {
+        if (board.getPieceAt(Position(col, row)) != nullptr)
+            return false;
+
+        col += colDir;
+        row += rowDir;
+    }
+
+    PieceInterface *targetPiece = board.getPieceAt(to);
+    return targetPiece == nullptr || targetPiece->getColor() != m_color;
+}
+
+class PieceInterface
+{
+protected:
+    PieceColor m_color;
+    int m_value;
+    std::string m_symbol;
+    Position m_position;
+
 public:
+    PieceInterface(PieceColor color, int value, const std::string &symbol, const Position &position)
+        : m_color(color), m_value(value), m_symbol(symbol), m_position(position) {}
+
     virtual ~PieceInterface() = default;
     virtual void move(const Position &target) = 0;
+    virtual void capture(const Position &target) = 0;
     virtual const Position &getPosition() const = 0;
     virtual const PieceColor &getColor() const = 0;
-};
+    virtual int getValue() const = 0;
+    virtual std::string getSymbol() const = 0;
+    virtual bool canJump() const = 0;
 
-#pragma once
-#include "PieceInterface.h"
+    // Nowa metoda
+    virtual bool isValidMove(const Position &from, const Position &to, const Board &board) const = 0;
 
-class Pawn : public PieceInterface {
-private:
-    Position m_position;
-    PieceColor m_color;
-
-public:
-    Pawn(const Position &startPosition, const PieceColor &color)
-        : m_position(startPosition), m_color(color) {}
-
-    void move(const Position &target) override;
-    const Position &getPosition() const override { return m_position; }
-    const PieceColor &getColor() const override { return m_color; }
-};
-
-#pragma once
-#include <functional>
-#include <unordered_map>
-#include "PieceInterface.h"
-#include "Position.h"
-
-class PieceFactory {
-private:
-    std::unordered_map<std::string, std::function<PieceInterface *(const Position &, const PieceColor &)>> m_creators;
-
-public:
-    PieceFactory();
-    std::unique_ptr<PieceInterface> createPiece(const std::string &type, const Position &position, const PieceColor &color);
-};
-
-#pragma once
-#include "Board.h"
-#include "PieceFactory.h"
-
-class GameManager {
-private:
-    Board m_board;
-    PieceFactory &m_factory;
-
-public:
-    GameManager(PieceFactory &factory) : m_factory(factory) {}
-    void setupBoard();
-    void movePiece(const Position &from, const Position &to);
-    void displayBoard() const;
-};
-
-#pragma once
-#include "GameManager.h"
-#include "PieceFactory.h"
-
-class Chess {
-private:
-    GameManager m_gameManager;
-
-public:
-    Chess(PieceFactory &factory);
-    void run();
-};
-
-#include "Pawn.h"
-#include <iostream>
-
-void Pawn::move(const Position &target) {
-    std::cout << "Pawn moved from " << m_position.col << m_position.row
-              << " to " << target.col << target.row << "\n";
-    m_position = target;
-}
-
-#include "PieceFactory.h"
-#include "Pawn.h"
-
-PieceFactory::PieceFactory() {
-    m_creators["Pawn"] = [](const Position &pos, const PieceColor &color) {
-        return new Pawn(pos, color);
-    };
-}
-
-std::unique_ptr<PieceInterface> PieceFactory::createPiece(const std::string &type, const Position &position, const PieceColor &color) {
-    if (m_creators.find(type) != m_creators.end()) {
-        return std::unique_ptr<PieceInterface>(m_creators[type](position, color));
+    const std::string getFullSymbol() const
+    {
+        return (m_color == PieceColor::WHITE ? "W" : "B") + m_symbol;
     }
-    throw std::invalid_argument("Unknown piece type: " + type);
-}
+};
 
-#include "GameManager.h"
-#include <iostream>
 
-void GameManager::setupBoard() {
-    for (char col = 'A'; col <= 'H'; ++col) {
-        m_board.putPiece(m_factory.createPiece("Pawn", Position(col, 2), PieceColor::WHITE), Position(col, 2));
-        m_board.putPiece(m_factory.createPiece("Pawn", Position(col, 7), PieceColor::BLACK), Position(col, 7));
+bool Pawn::isValidMove(const Position &from, const Position &to, const Board &board) const {
+    int direction = (m_color == PieceColor::WHITE) ? 1 : -1; // Białe idą w górę, czarne w dół
+    int rowDiff = to.row - from.row;
+    int colDiff = abs(to.col - from.col);
+
+    if (colDiff == 0) { // Ruch w linii prostej
+        if (rowDiff == direction && board.getPieceAt(to) == nullptr) {
+            return true; // Jeden krok do przodu
+        }
+        if (rowDiff == 2 * direction && 
+            board.getPieceAt(to) == nullptr &&
+            board.getPieceAt({from.col, from.row + direction}) == nullptr &&
+            ((m_color == PieceColor::WHITE && from.row == 2) || 
+            (m_color == PieceColor::BLACK && from.row == 7))) {
+            return true; // Pierwszy ruch o dwa pola
+        }
+    } else if (colDiff == 1 && rowDiff == direction) { // Bicie po skosie
+        PieceInterface *target = board.getPieceAt(to);
+        if (target != nullptr && target->getColor() != m_color) {
+            return true;
+        }
     }
+    return false;
 }
 
-void GameManager::movePiece(const Position &from, const Position &to) {
-    PieceInterface *piece = m_board.getPieceAt(from);
-    if (!piece) {
-        throw std::runtime_error("No piece at given position");
-    }
-    piece->move(to);
-    m_board.putPiece(std::unique_ptr<PieceInterface>(piece), to);
-    m_board.removePiece(from);
-}
-
-void GameManager::displayBoard() const {
-    m_board.displayBoardConsole();
-}
-
-#include "Chess.h"
-
-Chess::Chess(PieceFactory &factory) : m_gameManager(factory) {
-    m_gameManager.setupBoard();
-}
-
-void Chess::run() {
-    m_gameManager.displayBoard();
-}
-
-#include "Chess.h"
-#include "PieceFactory.h"
-
-int main() {
-    try {
-        PieceFactory factory;
-        Chess chess(factory);
-        chess.run();
-    } catch (const std::exception &e) {
-        std::cerr << "Error: " << e.what() << "\n";
-    }
-
-    return 0;
-}

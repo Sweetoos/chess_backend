@@ -9,6 +9,7 @@ private:
     PieceFactory &m_factory;
 
 public:
+    static int turn;
     GameManager(PieceFactory &factory) : m_factory(factory) {}
     void setupBoard();
     //void movePiece(const Position &from, const Position &to);
