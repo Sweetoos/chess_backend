@@ -6,15 +6,10 @@ project(run)
 add_executable(run
     src/board.cpp
     src/main.cpp
-    src/bishop.cpp
     src/piece.cpp
-    src/queen.cpp
-    src/king.cpp
-    src/knight.cpp
-    src/pawn.cpp
-    src/rook.cpp
     src/factory.cpp
     src/chess.cpp
+    src/move.cpp
 )
 
 target_include_directories(run PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)

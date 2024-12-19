@@ -1,5 +1,6 @@
 #include <iostream>
 #include "classes.h"
+#include <print>
 
 int main()
 {
@@ -11,7 +12,7 @@ int main()
     }
     catch(const std::exception& e)
     {
-        std::cerr <<"Error: "<< e.what() << '\n';
+        std::cerr <<"Error from main: "<< e.what() << '\n';
     }
 
 }

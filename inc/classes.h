@@ -12,6 +12,16 @@ enum class BoardColor
     BLACK
 };
 
+enum class PieceType
+{
+    PAWN,
+    BISHOP,
+    KING,
+    KNIGHT,
+    QUEEN,
+    ROOK
+};
+
 struct Position
 {
     char col;

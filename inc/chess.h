@@ -1,6 +1,7 @@
 #pragma once
 #include "classes.h"
 #include <print>
+#include "move.h"
 
 class GameManager
 {
@@ -15,7 +16,6 @@ public:
 
     GameManager(PieceFactory &factory) : m_factory(factory) {}
     void setupBoard();
-    // void movePiece(const Position &from, const Position &to);
     void displayBoard() const;
     PieceColor getCurrentTurn() const { return m_currentTurnColor; }
 };

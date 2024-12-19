@@ -273,3 +273,120 @@ void Chess::run()
         }
     }
 }
+
+
+
+
+
+
+//lalalala
+
+#include "move_validator.h"
+#include "pawn.h"
+#include "rook.h"
+#include "knight.h"
+#include "bishop.h"
+#include "queen.h"
+#include "king.h"
+#include <cmath>
+
+bool MoveValidator::isValidMove(const Position& from, const Position& to, const Board& board, const PieceInterface& piece) const {
+    if (dynamic_cast<const Pawn*>(&piece)) {
+        return isValidPawnMove(from, to, board, piece);
+    } else if (dynamic_cast<const Rook*>(&piece)) {
+        return isValidRookMove(from, to, board);
+    } else if (dynamic_cast<const Knight*>(&piece)) {
+        return isValidKnightMove(from, to);
+    } else if (dynamic_cast<const Bishop*>(&piece)) {
+        return isValidBishopMove(from, to, board);
+    } else if (dynamic_cast<const Queen*>(&piece)) {
+        return isValidQueenMove(from, to, board);
+    } else if (dynamic_cast<const King*>(&piece)) {
+        return isValidKingMove(from, to, board);
+    }
+    return false;
+}
+
+bool MoveValidator::isValidPawnMove(const Position& from, const Position& to, const Board& board, const PieceInterface& piece) const {
+    int direction = piece.isWhite() ? 1 : -1;
+    int startRow = piece.isWhite() ? 1 : 6;
+
+    // Standard forward move
+    if (from.y == to.y && to.x == from.x + direction) {
+        return !board.getPieceAt(to); // Target square must be empty
+    }
+
+    // Double forward move from starting position
+    if (from.y == to.y && from.x == startRow && to.x == from.x + 2 * direction) {
+        return !board.getPieceAt(to) && isPathClear(from, to, board);
+    }
+
+    // Diagonal capture
+    if (std::abs(to.y - from.y) == 1 && to.x == from.x + direction) {
+        const PieceInterface* targetPiece = board.getPieceAt(to);
+        return targetPiece && targetPiece->isWhite() != piece.isWhite();
+    }
+
+    return false;
+}
+
+bool MoveValidator::isValidRookMove(const Position& from, const Position& to, const Board& board) const {
+    if (from.x != to.x && from.y != to.y) return false; // Must move in straight lines
+    return isPathClear(from, to, board);
+}
+
+bool MoveValidator::isValidKnightMove(const Position& from, const Position& to) const {
+    int dx = std::abs(from.x - to.x);
+    int dy = std::abs(from.y - to.y);
+    return (dx == 2 && dy == 1) || (dx == 1 && dy == 2); // "L"-shaped moves
+}
+
+bool MoveValidator::isValidBishopMove(const Position& from, const Position& to, const Board& board) const {
+    if (std::abs(from.x - to.x) != std::abs(from.y - to.y)) return false; // Must move diagonally
+    return isPathClear(from, to, board);
+}
+
+bool MoveValidator::isValidQueenMove(const Position& from, const Position& to, const Board& board) const {
+    if (from.x == to.x || from.y == to.y) {
+        return isPathClear(from, to, board); // Rook-like move
+    }
+    if (std::abs(from.x - to.x) == std::abs(from.y - to.y)) {
+        return isPathClear(from, to, board); // Bishop-like move
+    }
+    return false;
+}
+
+bool MoveValidator::isValidKingMove(const Position& from, const Position& to, const Board& board) const {
+    int dx = std::abs(from.x - to.x);
+    int dy = std::abs(from.y - to.y);
+
+    // King moves one square in any direction
+    if (dx <= 1 && dy <= 1) {
+        return true;
+    }
+
+    // Additional logic for castling (if implemented) would go here
+
+    return false;
+}
+
+bool MoveValidator::isPathClear(const Position& from, const Position& to, const Board& board) const {
+    int dx = to.x - from.x;
+    int dy = to.y - from.y;
+
+    int stepX = (dx == 0) ? 0 : (dx > 0 ? 1 : -1);
+    int stepY = (dy == 0) ? 0 : (dy > 0 ? 1 : -1);
+
+    int currentX = from.x + stepX;
+    int currentY = from.y + stepY;
+
+    while (currentX != to.x || currentY != to.y) {
+        if (board.getPieceAt(Position(currentX, currentY))) {
+            return false; // Path is blocked
+        }
+        currentX += stepX;
+        currentY += stepY;
+    }
+
+    return true; // Path is clear
+}

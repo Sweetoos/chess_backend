@@ -57,7 +57,7 @@ void Board::displayBoardConsole() const
     std::cout << "\n   A\tB\tC\tD\tE\tF\tG\tH\n";
     for (int r = 7; r >= 0; r--)
     {
-        std::cout << r + 1 << " "; 
+        std::cout << r + 1 << " ";
         for (int c = 0; c < 8; c++)
         {
             PieceInterface *piece = m_grid[c][r].getPiece();
@@ -93,6 +93,7 @@ BoardColor Board::Square::getColor() const
 
 int Board::toIndex(char col) const
 {
+    col = std::tolower(col);
     if (col < 'a' || col > 'h')
     {
         throw std::out_of_range("Column out of range!");
