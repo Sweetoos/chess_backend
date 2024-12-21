@@ -1,3 +1,4 @@
+//board.h
 #pragma once
 #include "classes.h"
 #include <list>
@@ -15,7 +16,7 @@ public:
     public:
         Square() : m_squareColor(BoardColor::WHITE), m_piece(nullptr) {}
         Square(BoardColor color) : m_squareColor(color), m_piece(nullptr) {}
-        void setPiece(PieceInterface *piece);
+        void setPiece(PieceInterface *&piece);
         PieceInterface *getPiece() const;
         void clearPiece();
         BoardColor getColor() const;
@@ -28,7 +29,7 @@ public:
     Board();
     ~Board();
 
-    void putPiece(PieceInterface *piece);
+    void putPiece(PieceInterface *&piece);
     void removePiece(const Position &position);
     PieceInterface *getPieceAt(const Position &position) const;
     void displayBoardConsole() const;

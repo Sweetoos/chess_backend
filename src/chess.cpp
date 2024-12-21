@@ -1,3 +1,4 @@
+//chess.cpp
 #include <string>
 #include <iostream>
 #include <stdexcept>
@@ -84,9 +85,10 @@ void GameManager::movePiece(const Position &from, const Position &to)
     // moving piece
     m_board.removePiece(from);
 
+    std::cout<<"debug, piece is "<<piece<<'\n';
     if (piece == nullptr)
         throw("Error: Attempted to move a null piece");
-
+    std::cout<<"fsfsdf"<<'\n';
     piece->move(to);
     m_board.putPiece(piece);
     std::println("moved {0} to {0}{1}", piece->getFullSymbol(), to.col, to.row);

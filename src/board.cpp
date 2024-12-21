@@ -1,3 +1,4 @@
+//board.cpp
 #include "classes.h"
 #include <iostream>
 #include <string>
@@ -22,7 +23,7 @@ Board::~Board()
     // not needed for m_grid deletion
 }
 
-void Board::putPiece(PieceInterface *piece)
+void Board::putPiece(PieceInterface *&piece)
 {
     int col = toIndex(piece->getPosition().col);
     int row = piece->getPosition().row - 1;
@@ -37,6 +38,7 @@ void Board::removePiece(const Position &position)
     if (piece)
     {
         delete piece;
+        piece=nullptr;
         m_grid[col][row].clearPiece();
     }
 }
@@ -71,7 +73,7 @@ void Board::displayBoardConsole() const
     std::cout << "\n   A\tB\tC\tD\tE\tF\tG\tH\n";
 }
 
-void Board::Square::setPiece(PieceInterface *piece)
+void Board::Square::setPiece(PieceInterface *&piece)
 {
     m_piece = piece;
 }
