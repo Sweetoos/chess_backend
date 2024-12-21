@@ -1,4 +1,4 @@
-//move.cpp
+// move.cpp
 #include "classes.h"
 #include "move.h"
 #include <stdlib.h>
@@ -49,22 +49,25 @@ bool MoveManager::isPawnMoveValid(const Position &from, const Position &to, cons
     }
 
     // diagonal capture
-    // if (std::abs(to.col - from.col) == 1 && to.row == from.row + direction)
-    // {
-    //     // TODO
-    // }
+    if (to.row == from.row + direction && std::abs(to.col - from.col) == 1)
+    {
+        PieceInterface *targetPiece = board.getPieceAt(to);
+        return targetPiece != nullptr && targetPiece->getColor() != piece.getColor();
+    }
     return false;
 }
 
 bool MoveManager::isQueenMoveValid(const Position &from, const Position &to, const Board &board) const
 {
     // rook-like move
-    if (from.col != to.col && from.row != to.row)
-        return false;
+    bool isRookMove = (from.col == to.col || from.row == to.row);
 
     // bishop-like move
-    if (std::abs(from.col - to.col) != std::abs(from.row - to.row))
+    bool isBishopMove = (std::abs(from.col - to.col) == std::abs(from.row - to.row));
+
+    if (!isRookMove && !isBishopMove)
         return false;
+
     return isPathClear(from, to, board);
 }
 
