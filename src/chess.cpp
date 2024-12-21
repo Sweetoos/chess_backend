@@ -1,3 +1,4 @@
+// chess.cpp
 #include <string>
 #include <iostream>
 #include <stdexcept>
@@ -16,6 +17,7 @@ Chess::Chess(PieceFactory &factory) : m_gm(factory)
 
 void Chess::run()
 {
+    std::cout << "DEBUG: game run" << '\n';
     m_gm.displayBoard();
     while (true)
     {
@@ -26,7 +28,7 @@ void Chess::run()
         {
             std::print("enter move: ");
             std::getline(std::cin, move);
-
+            std::cout << "DEBUG: move: " << move << '\n';
             if (move.length() != 5)
                 throw std::invalid_argument("invalid argument, give it in format [{current position} {destination}]\n without piece notation, we will figure it out");
 
@@ -36,12 +38,14 @@ void Chess::run()
             int fromRow = move[1] - '0';
             char toCol = std::tolower(move[3]);
             int toRow = move[4] - '0';
+            std::cout << "DEBUG: " << fromCol << " " << fromRow << " " << toCol << " " << toRow << '\n';
 
             if (fromCol < 'a' || fromCol > 'h' || toCol < 'a' || toCol > 'h' || fromRow < 1 || fromRow > 8 || toRow < 1 || toRow > 8)
                 throw std::out_of_range("Move is out of bounds. Columns must be a-h and rows 1-8.");
 
             Position from(fromCol, fromRow);
             Position to(toCol, toRow);
+            std::cout << "DEBUG: " << from.col << " " << from.row << " " << to.col << " " << to.row << '\n';
 
             m_gm.movePiece(from, to);
             m_gm.displayBoard();
@@ -55,10 +59,12 @@ void Chess::run()
 
 void GameManager::movePiece(const Position &from, const Position &to)
 {
-    PieceInterface *piece = m_board.getPieceAt(from); //also tried auto
+    auto *piece = m_board.getPieceAt(from); // also tried auto
 
+    if (piece == nullptr)
+        throw std::runtime_error("No piece found at the given position");
     // if there is no piece at given square
-    if (piece==nullptr)
+    if (piece == nullptr)
     {
         std::println("no piece at {0}{1}", from.col, from.row);
         return;
@@ -82,7 +88,7 @@ void GameManager::movePiece(const Position &from, const Position &to)
     // capture
 
     // moving piece
-    m_board.removePiece(from);
+    //m_board.removePiece(from);
 
     if (piece == nullptr)
         throw("Error: Attempted to move a null piece");
@@ -99,6 +105,7 @@ void GameManager::movePiece(const Position &from, const Position &to)
 
 void GameManager::setupBoard()
 {
+    std::cout << "DEBUG: chess game setup" << '\n';
     for (char col = 'a'; col <= 'h'; col++)
     {
         m_board.putPiece(m_factory.createAndStorePiece(PieceType::PAWN, Position(col, 2), PieceColor::WHITE));
