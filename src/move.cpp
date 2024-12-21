@@ -41,8 +41,12 @@ bool MoveManager::isPawnMoveValid(const Position &from, const Position &to, cons
         return !board.getPieceAt(to);
 
     // double move
-    if (from.col == to.col && from.row == startRow && to.col == from.col + 2 * direction)
-        return !board.getPieceAt(to) && isPathClear(from, to, board);
+    int startingRank = (piece.getColor() == PieceColor::WHITE) ? 2 : 7;
+    if (from.row == startingRank && to.col == from.col && to.row == from.row + 2 * direction)
+    {
+        Position intermediatePos(from.col, from.row + direction);
+        return board.getPieceAt(to) == nullptr && board.getPieceAt(intermediatePos) == nullptr;
+    }
 
     // diagonal capture
     // if (std::abs(to.col - from.col) == 1 && to.row == from.row + direction)
