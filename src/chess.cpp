@@ -8,7 +8,7 @@
 #include "chess.h"
 
 /// @brief match turn
-int GameManager::turn = 0;
+int GameManager::turn = 1;
 
 Chess::Chess(PieceFactory &factory) : m_gm(factory)
 {
@@ -22,7 +22,8 @@ void Chess::run()
     while (true)
     {
         std::string move;
-        std::println("current turn: {0}", (m_gm.getCurrentTurn() == PieceColor::WHITE ? "white" : "black"));
+        std::println("TURN {0}",GameManager::turn);
+        std::println("{0} move", (m_gm.getCurrentTurn() == PieceColor::WHITE ? "white" : "black"));
 
         try
         {
@@ -88,14 +89,14 @@ void GameManager::movePiece(const Position &from, const Position &to)
     // capture
 
     // moving piece
-    //m_board.removePiece(from);
+    m_board.removePiece(from,false);
 
     if (piece == nullptr)
         throw("Error: Attempted to move a null piece");
 
     piece->move(to);
     m_board.putPiece(piece);
-    std::println("moved {0} to {0}{1}", piece->getFullSymbol(), to.col, to.row);
+    std::println("moved {0} to {1}{2}", piece->getFullSymbol(), to.col, to.row);
 
     // opponent move
     m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;

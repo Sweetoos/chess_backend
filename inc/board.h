@@ -1,4 +1,4 @@
-//board.h
+// board.h
 #pragma once
 #include "classes.h"
 #include <list>
@@ -23,7 +23,7 @@ public:
     };
 
 private:
-    std::array<std::array<Square,8>,8> m_grid;
+    std::array<std::array<Square, 8>, 8> m_grid;
 
 public:
     Board();
@@ -31,6 +31,7 @@ public:
 
     void putPiece(PieceInterface *piece);
     void removePiece(const Position &position);
+    void removePiece(const Position &position, bool deletePiece);
     PieceInterface *getPieceAt(const Position &position) const;
     void displayBoardConsole() const;
 

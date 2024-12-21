@@ -1,4 +1,4 @@
-//board.cpp
+// board.cpp
 #include "classes.h"
 #include <iostream>
 #include <string>
@@ -42,6 +42,20 @@ void Board::removePiece(const Position &position)
     }
 }
 
+void Board::removePiece(const Position &position, bool deletePiece)
+{
+    int col = toIndex(position.col);
+    int row = position.row - 1;
+    PieceInterface *piece = m_grid[col][row].getPiece();
+    if (piece)
+    {
+        if (deletePiece)
+            delete piece;
+        m_grid[col][row].clearPiece();
+    }
+    void removePiece(const Position &position);
+}
+
 PieceInterface *Board::getPieceAt(const Position &position) const
 {
     int col = toIndex(position.col);
@@ -55,7 +69,7 @@ PieceInterface *Board::getPieceAt(const Position &position) const
 
 void Board::displayBoardConsole() const
 {
-    std::cout << "\n   A\tB\tC\tD\tE\tF\tG\tH\n";
+    std::cout << "\n  A\tB\tC\tD\tE\tF\tG\tH\n";
     for (int r = 7; r >= 0; r--)
     {
         std::cout << r + 1 << " ";
@@ -69,7 +83,7 @@ void Board::displayBoardConsole() const
         }
         std::cout << r + 1 << '\n';
     }
-    std::cout << "\n   A\tB\tC\tD\tE\tF\tG\tH\n";
+    std::cout << "\n  A\tB\tC\tD\tE\tF\tG\tH\n";
 }
 
 void Board::Square::setPiece(PieceInterface *piece)
