@@ -9,7 +9,11 @@ bool MoveManager::isValidMove(const Position &from, const Position &to, const Bo
     switch (type)
     {
     case PieceType::PAWN:
-        return isPawnMoveValid(from, to, board, piece);
+    {
+        bool isValid = isPawnMoveValid(from, to, board, piece);
+        // promotion
+        return isValid;
+    }
     case PieceType::QUEEN:
         return isQueenMoveValid(from, to, board);
     case PieceType::KING:
@@ -34,7 +38,6 @@ bool MoveManager::isRookMoveValid(const Position &from, const Position &to, cons
 bool MoveManager::isPawnMoveValid(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const
 {
     int direction = piece.getColor() == PieceColor::WHITE ? 1 : -1;
-    int startRow = piece.getColor() == PieceColor::WHITE ? 1 : 6;
 
     // single move
     if (from.col == to.col && to.row == from.row + direction)
@@ -53,6 +56,15 @@ bool MoveManager::isPawnMoveValid(const Position &from, const Position &to, cons
     {
         PieceInterface *targetPiece = board.getPieceAt(to);
         return targetPiece != nullptr && targetPiece->getColor() != piece.getColor();
+    }
+
+    // en passant capture
+    if (
+        (piece.getType() == PieceType::PAWN) &&
+        (((piece.getColor() == PieceColor::WHITE) && (piece.getPosition().row == 5)) ||
+         ((piece.getColor() == PieceColor::BLACK) && (piece.getPosition().row == 4))) &&
+        (to.row == from.row + direction && std::abs(to.col - from.col) == 1))
+    {
     }
     return false;
 }
@@ -97,20 +109,6 @@ bool MoveManager::isBishopMoveValid(const Position &from, const Position &to, co
     return isPathClear(from, to, board);
 }
 
-bool MoveManager::isPawnCaptureValid(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const
-{
-    int direction = (piece.getColor() == PieceColor::WHITE) ? 1 : -1;
-
-    if (((to.row == from.row + 1) || (to.row == from.row - 1)) && to.col == from.col + direction)
-    {
-        // normal capture
-
-        // en passant
-    }
-    // delete
-    return true;
-}
-
 bool MoveManager::canCapture(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const
 {
     const auto targetPiece = board.getPieceAt(to);
@@ -121,7 +119,7 @@ bool MoveManager::canCapture(const Position &from, const Position &to, const Boa
     switch (piece.getType())
     {
     case PieceType::PAWN:
-        return isPawnCaptureValid(from, to, board, piece);
+        return isPawnMoveValid(from, to, board, piece);
     case PieceType::QUEEN:
         return isQueenMoveValid(from, to, board) && isPathClear(from, to, board);
     case PieceType::KING:
@@ -135,6 +133,10 @@ bool MoveManager::canCapture(const Position &from, const Position &to, const Boa
     }
     return false;
 }
+
+// bool MoveManager::isEnPassant(const PieceInterface &piece, const int turn) const
+// {
+// }
 
 /// @brief checks if piece can move to given square
 /// @param from current position

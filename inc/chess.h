@@ -1,4 +1,4 @@
-//chess.h
+// chess.h
 #pragma once
 #include "classes.h"
 #include <print>
@@ -11,6 +11,7 @@ private:
     PieceColor m_currentTurnColor = PieceColor::WHITE;
     PieceFactory &m_factory;
 
+
 public:
     static int turn;
     void movePiece(const Position &from, const Position &to);
@@ -18,7 +19,7 @@ public:
     GameManager(PieceFactory &factory) : m_factory(factory) {}
     void setupBoard();
     void displayBoard() const;
-    PieceColor getCurrentTurn() const { return m_currentTurnColor; }
+    PieceColor getCurrentTurnColor() const { return m_currentTurnColor; }
 };
 
 class Chess

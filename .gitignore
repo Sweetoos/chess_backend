@@ -3,3 +3,6 @@ CMakeFiles
 CMakeCache.txt
 build.ninja
 cmake_install.cmake
+games
+.vscode
+propositions

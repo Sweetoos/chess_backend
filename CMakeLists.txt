@@ -10,6 +10,7 @@ add_executable(run
     src/factory.cpp
     src/chess.cpp
     src/move.cpp
+    src/pgn.cpp
 )
 
 target_include_directories(run PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)

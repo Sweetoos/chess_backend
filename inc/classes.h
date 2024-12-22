@@ -30,6 +30,8 @@ struct Position
     Position(char col, int row) : col(col), row(row) {}
 };
 
+
+
 #include "piece.h"
 #include "board.h"
 #include "bishop.h"
@@ -40,5 +42,6 @@ struct Position
 #include "rook.h"
 #include "factory.h"
 #include "chess.h"
+#include "pgn.h"
 
 std::ostream &operator<<(std::ostream &os, const PieceColor &color);

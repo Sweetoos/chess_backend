@@ -17,19 +17,19 @@ Chess::Chess(PieceFactory &factory) : m_gm(factory)
 
 void Chess::run()
 {
-    std::cout << "DEBUG: game run" << '\n';
     m_gm.displayBoard();
+    PgnNotation pgn;
     while (true)
     {
         std::string move;
-        std::println("TURN {0}",GameManager::turn);
-        std::println("{0} move", (m_gm.getCurrentTurn() == PieceColor::WHITE ? "white" : "black"));
-
+        std::println("TURN {0}", GameManager::turn);
+        std::println("{0} move", (m_gm.getCurrentTurnColor() == PieceColor::WHITE ? "white" : "black"));
+        if (m_gm.getCurrentTurnColor() == PieceColor::WHITE)
+            pgn.appendToFile(std::to_string(GameManager::turn) + ".");
         try
         {
             std::print("enter move: ");
             std::getline(std::cin, move);
-            std::cout << "DEBUG: move: " << move << '\n';
             if (move.length() != 5)
                 throw std::invalid_argument("invalid argument, give it in format [{current position} {destination}]\n without piece notation, we will figure it out");
 
@@ -39,14 +39,12 @@ void Chess::run()
             int fromRow = move[1] - '0';
             char toCol = std::tolower(move[3]);
             int toRow = move[4] - '0';
-            std::cout << "DEBUG: " << fromCol << " " << fromRow << " " << toCol << " " << toRow << '\n';
 
             if (fromCol < 'a' || fromCol > 'h' || toCol < 'a' || toCol > 'h' || fromRow < 1 || fromRow > 8 || toRow < 1 || toRow > 8)
-                throw std::out_of_range("Move is out of bounds. Columns must be a-h and rows 1-8.");
+                throw std::out_of_range("move is out of bounds; columns must be a-h and rows 1-8");
 
             Position from(fromCol, fromRow);
             Position to(toCol, toRow);
-            std::cout << "DEBUG: " << from.col << " " << from.row << " " << to.col << " " << to.row << '\n';
 
             m_gm.movePiece(from, to);
             m_gm.displayBoard();
@@ -60,10 +58,11 @@ void Chess::run()
 
 void GameManager::movePiece(const Position &from, const Position &to)
 {
-    auto *piece = m_board.getPieceAt(from); // also tried auto
+    auto *piece = m_board.getPieceAt(from);
 
     if (piece == nullptr)
         throw std::runtime_error("No piece found at the given position");
+
     // if there is no piece at given square
     if (piece == nullptr)
     {
@@ -86,10 +85,8 @@ void GameManager::movePiece(const Position &from, const Position &to)
         return;
     }
 
-    // capture
-
     // moving piece
-    m_board.removePiece(from,false);
+    m_board.removePiece(from, false);
 
     if (piece == nullptr)
         throw("Error: Attempted to move a null piece");
@@ -97,8 +94,11 @@ void GameManager::movePiece(const Position &from, const Position &to)
     piece->move(to);
     m_board.putPiece(piece);
     std::println("moved {0} to {1}{2}", piece->getFullSymbol(), to.col, to.row);
+    PgnNotation pgn;
+    // TODO: add prefixes and suffixes for pgn moves like exd5
+    pgn.writeTurn(piece->getColor(), from.col, from.row, to.col, to.row, m_gm.getMoveType());
 
-    // opponent move
+    // opponent moves
     m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
     if (m_currentTurnColor == PieceColor::WHITE)
         turn++;
@@ -106,7 +106,6 @@ void GameManager::movePiece(const Position &from, const Position &to)
 
 void GameManager::setupBoard()
 {
-    std::cout << "DEBUG: chess game setup" << '\n';
     for (char col = 'a'; col <= 'h'; col++)
     {
         m_board.putPiece(m_factory.createAndStorePiece(PieceType::PAWN, Position(col, 2), PieceColor::WHITE));
