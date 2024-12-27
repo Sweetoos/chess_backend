@@ -62,16 +62,6 @@ int PgnNotation::getCurrentTurn()
     return GameManager::turn;
 }
 
-// void PgnNotation::writeTurnToFile()
-// {
-//     // auto tuple = m_turnList[getCurrentTurn()];
-//     // int currentTurn = std::get<0>(tuple);
-//     // std::string whiteMove = std::get<1>(tuple);
-//     // std::string blackMove = std::get<2>(tuple);
-//     std::string turn = std::to_string(currentTurn) + ". " + whiteMove + " " + blackMove;
-//     m_outFile << turn << " ";
-// }
-
 void PgnNotation::appendToFile(const std::string &line)
 {
     if (m_outFile.is_open())
@@ -90,12 +80,12 @@ void PgnNotation::writeTurn(const PieceColor &color, const char &fromCol, const 
     int turn=getCurrentTurn();
     switch (moveType)
     {
-    case MOVE:
+    case MoveType::MOVE:
     {
         appendToFile(toCol+std::to_string(toRow));
         break;
     }
-    case CAPTURE:
+    case MoveType::CAPTURE:
     {
 
     }

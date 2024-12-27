@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug build/run",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/run",
+            "args": [], // Add any command-line arguments here, if needed
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb", // Use "gdb" if you prefer GDB instead of LLDB
+            "preLaunchTask": "Build with Ninja"
+        }
+    ]
+}

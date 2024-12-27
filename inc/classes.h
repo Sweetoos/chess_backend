@@ -23,6 +23,17 @@ enum class PieceType
     ROOK
 };
 
+enum class MoveType
+{
+    MOVE,
+    CAPTURE,
+    COLLIDING_CAPTURE,
+    CHECK,
+    MATE,
+    PROMOTION,
+    CASTLE
+};
+
 struct Position
 {
     char col;

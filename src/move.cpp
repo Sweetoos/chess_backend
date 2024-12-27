@@ -5,6 +5,10 @@
 
 bool MoveManager::isValidMove(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const
 {
+    PieceInterface *targetPiece=board.getPieceAt(to);
+    if(targetPiece!=nullptr&&targetPiece->getColor()==piece.getColor())
+        return false;
+    //if target has a piece and has other color then change movetype to capture
     PieceType type = piece.getType();
     switch (type)
     {
@@ -134,9 +138,21 @@ bool MoveManager::canCapture(const Position &from, const Position &to, const Boa
     return false;
 }
 
-// bool MoveManager::isEnPassant(const PieceInterface &piece, const int turn) const
-// {
-// }
+bool MoveManager::isEnPassant(const PieceInterface &piece, const Position &from, const Position &to, const Board &board) const
+{
+    if (piece.getType() != PieceType::PAWN)
+        return false;
+    
+    int enPassantRow = (piece.getColor() == PieceColor::WHITE) ? 5 : 4;
+    if (to.row != enPassantRow)
+        return false;
+
+    Position enemyPawnPos(to.col, from.row);
+    PieceInterface *enemyPawn = board.getPieceAt(enemyPawnPos);
+
+    return enemyPawn && enemyPawn->getType() == PieceType::PAWN && enemyPawn->getColor() != piece.getColor();
+}
+
 
 /// @brief checks if piece can move to given square
 /// @param from current position

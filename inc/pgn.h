@@ -12,7 +12,7 @@ class PgnNotation
 {
 private:
     /// @brief <turn, white move, black move>
-    std::vector<std::string> m_turnList;
+    std::vector<std::string> m_turnList; //this is the vector that will store the moves and i want you to use this vector for the castling function
     std::string m_fileName;
     std::string m_move;
     std::ofstream m_outFile;
