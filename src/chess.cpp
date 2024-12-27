@@ -74,6 +74,15 @@ void GameManager::movePiece(const Position &from, const Position &to)
     // castle
     if (piece->getType() == PieceType::KING && std::abs(to.col - from.col) == 2)
     {
+        if (handleCastling(from, to))
+        {
+            m_moveType = MoveType::CASTLE;
+            PgnNotation pgn;
+            pgn.writeTurn(piece->getColor(), from.col, from.row, to.col, to.row, m_moveType);
+            m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
+            turn++;
+            return;
+        }
     }
 
     // checks if the move is correct
@@ -84,6 +93,27 @@ void GameManager::movePiece(const Position &from, const Position &to)
         return;
     }
 
+    // captures
+    PieceInterface *capturedPiece = m_board.getPieceAt(to);
+    bool isCapture = capturedPiece != nullptr;
+    bool isEnPassant = false;
+
+    // en passant check
+    if (piece->getType() == PieceType::PAWN && !isCapture && mm.isEnPassant(*piece, from, to, m_board))
+    {
+        isCapture = true;
+        isEnPassant = true;
+        Position capturedPawnPos(to.col, from.row);
+        m_board.removePiece(capturedPawnPos);
+    }
+
+    //regular capture
+    if(isCapture&&!isEnPassant)
+    {
+        m_board.removePiece(to);
+        m_moveType = MoveType::CAPTURE;
+    }
+
     // moving piece
     m_board.removePiece(from, false);
 
@@ -92,12 +122,36 @@ void GameManager::movePiece(const Position &from, const Position &to)
 
     piece->move(to);
     m_board.putPiece(piece);
+    // pawn promotion
+    if (piece->getType() == PieceType::PAWN && (to.row == 1 || to.row == 8))
+    {
+        handlePromotion(to);
+        m_moveType = MoveType::PROMOTION;
+    }
+    else
+    {
+        m_moveType=isCapture?MoveType::CAPTURE:MoveType::MOVE;
+    }
+
+    // check for check/checkmate
+    if(isKingInCheck(m_currentTurnColor==PieceColor::WHITE?PieceColor::BLACK:PieceColor::WHITE))
+    {
+        if(isCheckmate(m_currentTurnColor==PieceColor::WHITE?PieceColor::BLACK:PieceColor::WHITE))
+        {
+            m_moveType=MoveType::MATE;
+        }
+        else
+        {
+            m_moveType=MoveType::CHECK;
+        }
+    }
+
     std::println("moved {0} to {1}{2}", piece->getFullSymbol(), to.col, to.row);
     PgnNotation pgn;
     m_moveType = MoveType::MOVE;
     pgn.writeTurn(piece->getColor(), from.col, from.row, to.col, to.row, m_moveType);
 
-    // opponent moves
+    // change turn
     m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
     if (m_currentTurnColor == PieceColor::WHITE)
         turn++;
@@ -227,7 +281,8 @@ bool GameManager::isCheckmate(PieceColor color)
                         continue;
                     PieceInterface *capturedPiece = m_board.getPieceAt(to);
                     m_board.removePiece(to, false);
-                    if(capturedPiece) m_board.removePiece(to, false);
+                    if (capturedPiece)
+                        m_board.removePiece(to, false);
                     piece->move(to);
                     m_board.putPiece(piece);
 
@@ -238,7 +293,8 @@ bool GameManager::isCheckmate(PieceColor color)
                     m_board.removePiece(to, false);
                     piece->move(from);
                     m_board.putPiece(piece);
-                    if (capturedPiece) m_board.putPiece(capturedPiece);
+                    if (capturedPiece)
+                        m_board.putPiece(capturedPiece);
 
                     if (!isStillInCheck)
                         return false;
@@ -249,33 +305,34 @@ bool GameManager::isCheckmate(PieceColor color)
     return true;
 }
 /// @brief this is a helper function to check if the king or rook has moved to determine if castling is possible
-/// @param piece 
-/// @return 
+/// @param piece
+/// @return
 bool GameManager::isFirstMove(const PieceInterface *piece)
 {
-    if(!piece) return false;
+    if (!piece)
+        return false;
 
     // for white
-    if(piece->getColor() == PieceColor::WHITE)
+    if (piece->getColor() == PieceColor::WHITE)
     {
-        if(piece->getType() == PieceType::KING)
+        if (piece->getType() == PieceType::KING)
         {
             return piece->getPosition().col == 'e' && piece->getPosition().row == 1;
         }
-        else if(piece->getType() == PieceType::ROOK)
+        else if (piece->getType() == PieceType::ROOK)
         {
             return (piece->getPosition().col == 'a' && piece->getPosition().row == 1) || (piece->getPosition().col == 'h' && piece->getPosition().row == 1);
         }
     }
 
     // for black
-    if(piece->getColor() == PieceColor::BLACK)
+    if (piece->getColor() == PieceColor::BLACK)
     {
-        if(piece->getType() == PieceType::KING)
+        if (piece->getType() == PieceType::KING)
         {
             return piece->getPosition().col == 'e' && piece->getPosition().row == 8;
         }
-        else if(piece->getType() == PieceType::ROOK)
+        else if (piece->getType() == PieceType::ROOK)
         {
             return (piece->getPosition().col == 'a' && piece->getPosition().row == 8) || (piece->getPosition().col == 'h' && piece->getPosition().row == 8);
         }
