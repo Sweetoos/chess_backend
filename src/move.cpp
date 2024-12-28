@@ -5,10 +5,10 @@
 
 bool MoveManager::isValidMove(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const
 {
-    PieceInterface *targetPiece=board.getPieceAt(to);
-    if(targetPiece!=nullptr&&targetPiece->getColor()==piece.getColor())
+    PieceInterface *targetPiece = board.getPieceAt(to);
+    if (targetPiece != nullptr && targetPiece->getColor() == piece.getColor())
         return false;
-    //if target has a piece and has other color then change movetype to capture
+    // if target has a piece and has other color then change movetype to capture
     PieceType type = piece.getType();
     switch (type)
     {
@@ -21,7 +21,7 @@ bool MoveManager::isValidMove(const Position &from, const Position &to, const Bo
     case PieceType::QUEEN:
         return isQueenMoveValid(from, to, board);
     case PieceType::KING:
-        return isKingMoveValid(from, to, board);
+        return isKingMoveValid(from, to);
     case PieceType::ROOK:
         return isRookMoveValid(from, to, board);
     case PieceType::KNIGHT:
@@ -87,15 +87,13 @@ bool MoveManager::isQueenMoveValid(const Position &from, const Position &to, con
     return isPathClear(from, to, board);
 }
 
-bool MoveManager::isKingMoveValid(const Position &from, const Position &to, const Board &board) const
+bool MoveManager::isKingMoveValid(const Position &from, const Position &to) const
 {
     int dcol = std::abs(from.col - to.col);
     int drow = std::abs(from.row - to.row);
 
     if (dcol <= 1 && drow <= 1)
         return true;
-    // TODO check
-    // TODO castle
     return false;
 }
 
@@ -127,7 +125,7 @@ bool MoveManager::canCapture(const Position &from, const Position &to, const Boa
     case PieceType::QUEEN:
         return isQueenMoveValid(from, to, board) && isPathClear(from, to, board);
     case PieceType::KING:
-        return isKingMoveValid(from, to, board) /* TODO check mechanic */;
+        return isKingMoveValid(from, to);
     case PieceType::ROOK:
         return isRookMoveValid(from, to, board) && isPathClear(from, to, board);
     case PieceType::KNIGHT:
@@ -142,7 +140,7 @@ bool MoveManager::isEnPassant(const PieceInterface &piece, const Position &from,
 {
     if (piece.getType() != PieceType::PAWN)
         return false;
-    
+
     int enPassantRow = (piece.getColor() == PieceColor::WHITE) ? 5 : 4;
     if (to.row != enPassantRow)
         return false;
@@ -152,7 +150,6 @@ bool MoveManager::isEnPassant(const PieceInterface &piece, const Position &from,
 
     return enemyPawn && enemyPawn->getType() == PieceType::PAWN && enemyPawn->getColor() != piece.getColor();
 }
-
 
 /// @brief checks if piece can move to given square
 /// @param from current position

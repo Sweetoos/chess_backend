@@ -18,14 +18,11 @@ Chess::Chess(PieceFactory &factory) : m_gm(factory)
 void Chess::run()
 {
     m_gm.displayBoard();
-    PgnNotation pgn;
     while (true)
     {
         std::string move;
         std::println("TURN {0}", GameManager::turn);
         std::println("{0} move", (m_gm.getCurrentTurnColor() == PieceColor::WHITE ? "white" : "black"));
-        if (m_gm.getCurrentTurnColor() == PieceColor::WHITE)
-            pgn.appendToFile(std::to_string(GameManager::turn) + ".");
         try
         {
             std::print("enter move: ");
@@ -46,8 +43,19 @@ void Chess::run()
             Position from(fromCol, fromRow);
             Position to(toCol, toRow);
 
-            m_gm.movePiece(from, to);
-            m_gm.displayBoard();
+            if (m_gm.movePiece(from, to)) {
+                m_gm.displayBoard();
+                
+                if (m_gm.isKingInCheck(m_gm.getCurrentTurnColor()))
+                    std::println("CHECK!");
+
+                if (m_gm.isCheckmate(m_gm.getCurrentTurnColor()))
+                {
+                    std::println("Checkmate! {0} wins!", 
+                        (m_gm.getCurrentTurnColor() == PieceColor::BLACK) ? "White" : "Black");
+                    break;
+                }
+            }
         }
         catch (const std::exception &e)
         {
@@ -56,7 +64,7 @@ void Chess::run()
     }
 }
 
-void GameManager::movePiece(const Position &from, const Position &to)
+bool GameManager::movePiece(const Position &from, const Position &to)
 {
     auto *piece = m_board.getPieceAt(from);
 
@@ -68,7 +76,7 @@ void GameManager::movePiece(const Position &from, const Position &to)
     if (piece->getColor() != m_currentTurnColor)
     {
         std::println("it's not {0}'s turn", (m_currentTurnColor == PieceColor::WHITE) ? "black" : "white");
-        return;
+        return false;
     }
 
     // castle
@@ -77,11 +85,11 @@ void GameManager::movePiece(const Position &from, const Position &to)
         if (handleCastling(from, to))
         {
             m_moveType = MoveType::CASTLE;
-            PgnNotation pgn;
-            pgn.writeTurn(piece->getColor(), from.col, from.row, to.col, to.row, m_moveType);
+            m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, 
+                           to.col, to.row, m_moveType, m_board);
             m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
             turn++;
-            return;
+            return true;
         }
     }
 
@@ -90,7 +98,7 @@ void GameManager::movePiece(const Position &from, const Position &to)
     if (!mm.isValidMove(from, to, m_board, *piece))
     {
         std::println("invalid move for {0}", piece->getFullSymbol());
-        return;
+        return false;
     }
 
     // captures
@@ -107,8 +115,8 @@ void GameManager::movePiece(const Position &from, const Position &to)
         m_board.removePiece(capturedPawnPos);
     }
 
-    //regular capture
-    if(isCapture&&!isEnPassant)
+    // regular capture
+    if (isCapture && !isEnPassant)
     {
         m_board.removePiece(to);
         m_moveType = MoveType::CAPTURE;
@@ -118,43 +126,46 @@ void GameManager::movePiece(const Position &from, const Position &to)
     m_board.removePiece(from, false);
 
     if (piece == nullptr)
-        throw("Error: Attempted to move a null piece");
+        throw std::runtime_error("Error: Attempted to move a null piece");
 
     piece->move(to);
     m_board.putPiece(piece);
     // pawn promotion
+    PieceType promotionType = PieceType::QUEEN;
     if (piece->getType() == PieceType::PAWN && (to.row == 1 || to.row == 8))
     {
-        handlePromotion(to);
+        promotionType = handlePromotion(to);
         m_moveType = MoveType::PROMOTION;
     }
     else
     {
-        m_moveType=isCapture?MoveType::CAPTURE:MoveType::MOVE;
+        m_moveType = isCapture ? MoveType::CAPTURE : MoveType::MOVE;
     }
 
     // check for check/checkmate
-    if(isKingInCheck(m_currentTurnColor==PieceColor::WHITE?PieceColor::BLACK:PieceColor::WHITE))
+    if (isKingInCheck(m_currentTurnColor == PieceColor::WHITE ? PieceColor::BLACK : PieceColor::WHITE))
     {
-        if(isCheckmate(m_currentTurnColor==PieceColor::WHITE?PieceColor::BLACK:PieceColor::WHITE))
+        if (isCheckmate(m_currentTurnColor == PieceColor::WHITE ? PieceColor::BLACK : PieceColor::WHITE))
         {
-            m_moveType=MoveType::MATE;
+            m_moveType = MoveType::MATE;
         }
         else
         {
-            m_moveType=MoveType::CHECK;
+            m_moveType = MoveType::CHECK;
         }
     }
 
     std::println("moved {0} to {1}{2}", piece->getFullSymbol(), to.col, to.row);
-    PgnNotation pgn;
+    m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, 
+                    to.col, to.row, m_moveType, m_board, promotionType);
     m_moveType = MoveType::MOVE;
-    pgn.writeTurn(piece->getColor(), from.col, from.row, to.col, to.row, m_moveType);
 
     // change turn
     m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
     if (m_currentTurnColor == PieceColor::WHITE)
         turn++;
+
+    return true;
 }
 
 bool GameManager::handleCastling(const Position &from, const Position &to)
@@ -172,13 +183,21 @@ bool GameManager::handleCastling(const Position &from, const Position &to)
     if (!rook || !isFirstMove(rook))
         return false;
 
+    // check if path is clear and not under attack
     int direction = (to.col > from.col) ? 1 : -1;
-    for (char col = from.col + direction; col != rookCol; col += direction)
+    char col = from.col + direction;
+    while (col != rookCol)
     {
-        Position pos(col, newRookCol);
+        Position pos(col, from.row);
         if (m_board.getPieceAt(pos) != nullptr || isSquareUnderAttack(pos, king->getColor()))
             return false;
+        col += direction;
     }
+
+    // check if king would pass through or land on attacked square
+    if (isSquareUnderAttack(from, king->getColor()) || 
+        isSquareUnderAttack(to, king->getColor()))
+        return false;
 
     // performing castle
     m_board.removePiece(from, false);
@@ -190,7 +209,8 @@ bool GameManager::handleCastling(const Position &from, const Position &to)
 
     return true;
 }
-void GameManager::handlePromotion(const Position &pos)
+
+PieceType GameManager::handlePromotion(const Position &pos)
 {
     char promotion;
     do
@@ -224,6 +244,7 @@ void GameManager::handlePromotion(const Position &pos)
     }
     PieceInterface *newPiece = m_factory.createAndStorePiece(newType, pos, color);
     m_board.putPiece(newPiece);
+    return newType;
 }
 
 bool GameManager::isSquareUnderAttack(const Position &pos, PieceColor defendingColor) const

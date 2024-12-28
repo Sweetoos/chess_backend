@@ -27,7 +27,6 @@ enum class MoveType
 {
     MOVE,
     CAPTURE,
-    COLLIDING_CAPTURE,
     CHECK,
     MATE,
     PROMOTION,
@@ -51,8 +50,8 @@ struct Position
 #include "knight.h"
 #include "pawn.h"
 #include "rook.h"
+#include "pgn.h"
 #include "factory.h"
 #include "chess.h"
-#include "pgn.h"
 
 std::ostream &operator<<(std::ostream &os, const PieceColor &color);

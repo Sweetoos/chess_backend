@@ -7,8 +7,7 @@ class MoveManager
 {
 private:
     int m_enPassantTurn;
-    //bool m_isEnPassant = false;
-    MoveType m_moveType; 
+    MoveType m_moveType=MoveType::MOVE; 
     std::string m_movePrefix;
     std::string m_moveSuffix;
 
@@ -20,7 +19,7 @@ public:
     bool isPawnMoveValid(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const;
     bool isRookMoveValid(const Position &from, const Position &to, const Board &board) const;
     bool isQueenMoveValid(const Position &from, const Position &to, const Board &board) const;
-    bool isKingMoveValid(const Position &from, const Position &to, const Board &board) const;
+    bool isKingMoveValid(const Position &from, const Position &to) const;
     bool isKnightMoveValid(const Position &from, const Position &to) const;
     bool isBishopMoveValid(const Position &from, const Position &to, const Board &board) const;
 
