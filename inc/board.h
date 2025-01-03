@@ -28,6 +28,8 @@ private:
 public:
     Board();
     ~Board();
+    Board(const Board& other); // Add copy constructor declaration
+    Board& operator=(const Board& other);  // Add assignment operator
 
     void putPiece(PieceInterface *piece);
     void removePiece(const Position &position);

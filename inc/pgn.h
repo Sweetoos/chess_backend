@@ -8,13 +8,10 @@
 #include <vector>
 #include <array>
 
-struct DisambiguationInfo
-{
-    bool needed;
-    bool needsFile;
-    bool needsRank;
-    DisambiguationInfo(bool n = false, bool f = false, bool r = false) 
-        : needed(n), needsFile(f), needsRank(r) {}
+struct PieceInfo {
+    Position pos;
+    PieceType type;
+    PieceColor color;
 };
 
 class PgnNotation
@@ -29,6 +26,12 @@ private:
     /// @brief <piece, piece color, last move starting position, last move destination>
     std::tuple<PieceType, PieceColor, std::string, std::string> m_lastMove;
 
+    std::vector<PieceInfo> getCandidates(const Board& board, const Position& to, 
+                                         const PieceType& type, const PieceColor& color) const;
+    std::string getDisambiguation(const char &fromCol, const int &fromRow, 
+                                 const std::vector<PieceInfo> &candidates) const;
+    void debugPrintCandidates(const std::vector<PieceInfo>& candidates) const;
+
 public:
     PgnNotation();
     ~PgnNotation();
@@ -42,9 +45,6 @@ public:
                   const int &fromRow, const char &toCol, const int &toRow, 
                   const MoveType &moveType, const Board& board,
                   const PieceType &promotionType = PieceType::QUEEN);
-    DisambiguationInfo needsDisambiguation(const Board& board, const Position& from, 
-                                           const Position& to, const PieceType& type, 
-                                           const PieceColor& color) const;
 };
 
 #endif

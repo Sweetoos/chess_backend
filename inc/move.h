@@ -11,9 +11,7 @@ private:
     std::string m_movePrefix;
     std::string m_moveSuffix;
 
-
 public:
-
     // move validators
     bool isValidMove(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const;
     bool isPawnMoveValid(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const;

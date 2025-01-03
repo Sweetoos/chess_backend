@@ -15,4 +15,7 @@ public:
     int getValue() const override { return m_value; }
     std::string getSymbol() const override { return m_symbol; }
     PieceType getType() const override { return m_type; }
+    PieceInterface* clone() const override {
+        return new Knight(*this);
+    }
 };

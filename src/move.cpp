@@ -2,34 +2,49 @@
 #include "classes.h"
 #include "move.h"
 #include <stdlib.h>
+#include <iostream>
 
 bool MoveManager::isValidMove(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const
 {
+    std::cout << "Checking move validity from " << from.col << from.row 
+              << " to " << to.col << to.row << "\n";
+
     PieceInterface *targetPiece = board.getPieceAt(to);
-    if (targetPiece != nullptr && targetPiece->getColor() == piece.getColor())
+    if (targetPiece != nullptr && targetPiece->getColor() == piece.getColor()) {
+        std::cout << "Invalid: Target square occupied by same color piece\n";
         return false;
-    // if target has a piece and has other color then change movetype to capture
+    }
+
     PieceType type = piece.getType();
-    switch (type)
-    {
-    case PieceType::PAWN:
-    {
-        bool isValid = isPawnMoveValid(from, to, board, piece);
-        // promotion
-        return isValid;
+    bool result = false;
+
+    switch (type) {
+        case PieceType::PAWN:
+        {
+            bool isValid = isPawnMoveValid(from, to, board, piece);
+            // promotion
+            result = isValid;
+            break;
+        }
+        case PieceType::QUEEN:
+            result = isQueenMoveValid(from, to, board);
+            break;
+        case PieceType::KING:
+            result = isKingMoveValid(from, to);
+            break;
+        case PieceType::ROOK:
+            result = isRookMoveValid(from, to, board);
+            break;
+        case PieceType::KNIGHT:
+            result = isKnightMoveValid(from, to);
+            std::cout << "Knight move is " << (result ? "valid" : "invalid") << "\n";
+            break;
+        case PieceType::BISHOP:
+            result = isBishopMoveValid(from, to, board);
+            break;
     }
-    case PieceType::QUEEN:
-        return isQueenMoveValid(from, to, board);
-    case PieceType::KING:
-        return isKingMoveValid(from, to);
-    case PieceType::ROOK:
-        return isRookMoveValid(from, to, board);
-    case PieceType::KNIGHT:
-        return isKnightMoveValid(from, to);
-    case PieceType::BISHOP:
-        return isBishopMoveValid(from, to, board);
-    }
-    return false;
+
+    return result;
 }
 
 bool MoveManager::isRookMoveValid(const Position &from, const Position &to, const Board &board) const
