@@ -60,6 +60,10 @@ void Chess::run()
         catch (const std::exception &e)
         {
             std::cerr << "Error: " << e.what() << '\n';
+            // if (std::string(e.what()).find("invalid argument") == std::string::npos)
+            // {
+            //     std::cerr << "Error: " << e.what() << '\n';
+            // }
         }
     }
 }
@@ -85,10 +89,11 @@ bool GameManager::movePiece(const Position &from, const Position &to)
         if (handleCastling(from, to))
         {
             m_moveType = MoveType::CASTLE;
-            m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, 
-                           to.col, to.row, m_moveType, m_board);
+            std::string castleNotation = (to.col > from.col) ? "O-O" : "O-O-O";
+            m_pgn.appendToFile(castleNotation + "\n");
             m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
-            turn++;
+            if (m_currentTurnColor == PieceColor::WHITE)
+                turn++;
             return true;
         }
     }
@@ -97,7 +102,7 @@ bool GameManager::movePiece(const Position &from, const Position &to)
     MoveManager mm;
     if (!mm.isValidMove(from, to, m_board, *piece))
     {
-        std::println("invalid move for {0}", piece->getFullSymbol());
+        std::println("invalid move for {0}\n", piece->getFullSymbol());
         return false;
     }
 
@@ -131,11 +136,18 @@ bool GameManager::movePiece(const Position &from, const Position &to)
     piece->move(to);
     m_board.putPiece(piece);
     // pawn promotion
-    PieceType promotionType = PieceType::QUEEN;
     if (piece->getType() == PieceType::PAWN && (to.row == 1 || to.row == 8))
     {
-        promotionType = handlePromotion(to);
+        PieceType promotionType = handlePromotion(to);
+        piece = m_board.getPieceAt(to); // Update the piece pointer to the new piece
+        std::string promotionNotation = std::string(1, from.col) + std::to_string(from.row) + " -> " + std::string(1, to.col) + std::to_string(to.row) + "=" + promotionTypeToString(promotionType);
+        m_pgn.appendToFile(promotionNotation + "\n");
         m_moveType = MoveType::PROMOTION;
+        m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row);
+        m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
+        if (m_currentTurnColor == PieceColor::WHITE)
+            turn++;
+        return true;
     }
     else
     {
@@ -154,11 +166,8 @@ bool GameManager::movePiece(const Position &from, const Position &to)
             m_moveType = MoveType::CHECK;
         }
     }
-
-    std::println("moved {0} to {1}{2}", piece->getFullSymbol(), to.col, to.row);
-    m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, 
-                    to.col, to.row, m_moveType, m_board, promotionType);
-    m_moveType = MoveType::MOVE;
+    //std::println("moved {0} to {1}{2}",piece->getFullSymbol(),to.col,to.row);
+    m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row);
 
     // change turn
     m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
@@ -171,7 +180,7 @@ bool GameManager::movePiece(const Position &from, const Position &to)
 bool GameManager::handleCastling(const Position &from, const Position &to)
 {
     auto *king = m_board.getPieceAt(from);
-    if (!isFirstMove(king))
+    if (!isFirstMove(king) || m_pgn.hasPieceMoved(PieceType::KING, king->getColor(), from.col))
         return false;
 
     char rookCol = (to.col > from.col) ? 'h' : 'a';
@@ -180,7 +189,7 @@ bool GameManager::handleCastling(const Position &from, const Position &to)
     Position rookPos(rookCol, from.row);
     auto *rook = m_board.getPieceAt(rookPos);
 
-    if (!rook || !isFirstMove(rook))
+    if (!rook || !isFirstMove(rook) || m_pgn.hasPieceMoved(PieceType::ROOK, rook->getColor(), rookCol))
         return false;
 
     // check if path is clear and not under attack
@@ -220,9 +229,8 @@ PieceType GameManager::handlePromotion(const Position &pos)
         promotion = std::toupper(promotion);
     } while (promotion != 'Q' && promotion != 'R' && promotion != 'B' && promotion != 'N');
 
-    PieceInterface *pawn = m_board.getPieceAt(pos);
-    PieceColor color = pawn->getColor();
-    m_board.removePiece(pos);
+    PieceColor color = m_board.getPieceAt(pos)->getColor();
+    m_board.removePiece(pos, true); // Ensure the pawn is deleted
 
     PieceType newType;
     switch (promotion)
@@ -390,4 +398,21 @@ void GameManager::setupBoard()
 void GameManager::displayBoard() const
 {
     m_board.displayBoardConsole();
+}
+
+std::string GameManager::promotionTypeToString(PieceType type) const
+{
+    switch (type)
+    {
+    case PieceType::QUEEN:
+        return "Q";
+    case PieceType::ROOK:
+        return "R";
+    case PieceType::BISHOP:
+        return "B";
+    case PieceType::KNIGHT:
+        return "N";
+    default:
+        return "";
+    }
 }

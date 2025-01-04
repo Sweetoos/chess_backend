@@ -25,12 +25,8 @@ Board::Board(const Board& other) {
             m_grid[i][j] = other.m_grid[i][j];
             PieceInterface* piece = other.m_grid[i][j].getPiece();
             if (piece) {
-                try {
-                    m_grid[i][j].setPiece(piece->clone());
-                } catch (const std::exception& e) {
-                    std::cerr << "Error cloning piece: " << e.what() << "\n";
-                    m_grid[i][j].setPiece(nullptr);
-                }
+                // Instead of cloning, we just copy the pointer
+                m_grid[i][j].setPiece(piece);
             }
         }
     }
@@ -55,7 +51,8 @@ Board& Board::operator=(const Board& other) {
                 m_grid[i][j] = other.m_grid[i][j];
                 PieceInterface* piece = other.m_grid[i][j].getPiece();
                 if (piece) {
-                    m_grid[i][j].setPiece(piece->clone());
+                    // Instead of cloning, we just copy the pointer
+                    m_grid[i][j].setPiece(piece);
                 }
             }
         }

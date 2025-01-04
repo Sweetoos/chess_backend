@@ -1,0 +1,10 @@
+# ninja log v6
+1	80	1735990192005175288	build.ninja	baf58237cf21d978
+1	790	1735990192009200898	CMakeFiles/run.dir/src/piece.cpp.o	c61ce2184d378d88
+1	792	1735990192008862562	CMakeFiles/run.dir/src/board.cpp.o	e7b4b9f4ba2ea223
+1	793	1735990192009681359	CMakeFiles/run.dir/src/move.cpp.o	7ec5cba4d67e738e
+1	795	1735990192009059480	CMakeFiles/run.dir/src/main.cpp.o	32f53b09b41a92cf
+2	837	1735990192009887110	CMakeFiles/run.dir/src/pgn.cpp.o	caf8f4945560d1ec
+1	985	1735990192009365399	CMakeFiles/run.dir/src/factory.cpp.o	1a81db881f0bf14
+1	1021	1735990192009531108	CMakeFiles/run.dir/src/chess.cpp.o	85c2d50b3f47ad42
+1021	1110	1735990193029268331	run	e1638394db2fc2

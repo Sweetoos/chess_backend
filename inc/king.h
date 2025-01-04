@@ -8,7 +8,7 @@ class King : public PieceInterface
 {
 public:
     King(PieceColor color, const Position &position)
-        : PieceInterface(color, 0, "K", position, PieceType::KING) {}
+        : PieceInterface(color, 999, "K", position, PieceType::KING) {}
     void move(const Position &target) override { m_position = target; }
     void capture(const Position &target) override { m_position = target; }
     const Position &getPosition() const override { return m_position; }

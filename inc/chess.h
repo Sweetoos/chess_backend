@@ -28,6 +28,7 @@ public:
     bool isCheckmate(PieceColor color);
     bool isFirstMove(const PieceInterface *piece);
     PgnNotation& getPgn() { return m_pgn; }  
+    std::string promotionTypeToString(PieceType type) const;  // Add this line
 };
 
 class Chess

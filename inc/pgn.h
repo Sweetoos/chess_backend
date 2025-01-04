@@ -7,10 +7,14 @@
 #include <fstream>
 #include <vector>
 #include <array>
+#include <unordered_map>
 
-struct PieceInfo {
-    Position pos;
+struct MoveInfo {
     PieceType type;
+    int fromRow;
+    int toRow;
+    char fromCol;
+    char toCol;
     PieceColor color;
 };
 
@@ -24,13 +28,10 @@ private:
     std::ofstream m_outFile;
 
     /// @brief <piece, piece color, last move starting position, last move destination>
-    std::tuple<PieceType, PieceColor, std::string, std::string> m_lastMove;
+    MoveInfo m_lastMove;
 
-    std::vector<PieceInfo> getCandidates(const Board& board, const Position& to, 
-                                         const PieceType& type, const PieceColor& color) const;
-    std::string getDisambiguation(const char &fromCol, const int &fromRow, 
-                                 const std::vector<PieceInfo> &candidates) const;
-    void debugPrintCandidates(const std::vector<PieceInfo>& candidates) const;
+    /// @brief Track if the king or rook has moved
+    std::unordered_map<std::string, bool> m_pieceMoved;
 
 public:
     PgnNotation();
@@ -39,12 +40,12 @@ public:
     void openFile(const std::string &fileName);
     void fileHeader();
     int getCurrentTurn();
-    //void writeTurnToFile();
     void appendToFile(const std::string &line);
     void writeTurn(const PieceColor &color, const PieceType &type, const char &fromCol, 
-                  const int &fromRow, const char &toCol, const int &toRow, 
-                  const MoveType &moveType, const Board& board,
-                  const PieceType &promotionType = PieceType::QUEEN);
+                  const int &fromRow, const char &toCol, const int &toRow);
+    MoveInfo getLastMove() const;
+    bool hasPieceMoved(const PieceType &type, const PieceColor &color, const char &col) const;
+    std::string promotionTypeToString(PieceType type) const;  // Add this line
 };
 
 #endif

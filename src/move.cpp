@@ -1,17 +1,14 @@
 // move.cpp
 #include "classes.h"
 #include "move.h"
+#include "pgn.h"
 #include <stdlib.h>
 #include <iostream>
 
 bool MoveManager::isValidMove(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const
 {
-    std::cout << "Checking move validity from " << from.col << from.row 
-              << " to " << to.col << to.row << "\n";
-
     PieceInterface *targetPiece = board.getPieceAt(to);
     if (targetPiece != nullptr && targetPiece->getColor() == piece.getColor()) {
-        std::cout << "Invalid: Target square occupied by same color piece\n";
         return false;
     }
 
@@ -37,7 +34,6 @@ bool MoveManager::isValidMove(const Position &from, const Position &to, const Bo
             break;
         case PieceType::KNIGHT:
             result = isKnightMoveValid(from, to);
-            std::cout << "Knight move is " << (result ? "valid" : "invalid") << "\n";
             break;
         case PieceType::BISHOP:
             result = isBishopMoveValid(from, to, board);
@@ -84,6 +80,11 @@ bool MoveManager::isPawnMoveValid(const Position &from, const Position &to, cons
          ((piece.getColor() == PieceColor::BLACK) && (piece.getPosition().row == 4))) &&
         (to.row == from.row + direction && std::abs(to.col - from.col) == 1))
     {
+        // Check if the previous move was a double move from a pawn
+        const MoveInfo& lastMove = PgnNotation().getLastMove();
+        if (lastMove.type == PieceType::PAWN && std::abs(lastMove.fromRow - lastMove.toRow) == 2) {
+            return true;
+        }
     }
     return false;
 }

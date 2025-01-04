@@ -7,7 +7,7 @@ class Knight : public PieceInterface
 {
 public:
     Knight(PieceColor color, const Position &position)
-        : PieceInterface(color, 3, "N", position,PieceType::KNIGHT) {}
+        : PieceInterface(color, 3, "N", position, PieceType::KNIGHT) {}
     void move(const Position &target) override { m_position = target; }
     void capture(const Position &target) override { m_position = target; }
     const Position &getPosition() const override { return m_position; }
@@ -15,7 +15,4 @@ public:
     int getValue() const override { return m_value; }
     std::string getSymbol() const override { return m_symbol; }
     PieceType getType() const override { return m_type; }
-    PieceInterface* clone() const override {
-        return new Knight(*this);
-    }
 };

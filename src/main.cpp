@@ -9,7 +9,6 @@ int main()
     {
         PieceFactory factory;
         Chess game(factory);
-        std::cout<<"DEBUG: start"<<'\n';
         game.run();
     }
     catch(const std::exception& e)

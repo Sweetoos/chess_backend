@@ -26,5 +26,4 @@ public:
     virtual std::string getSymbol() const = 0;
     virtual const std::string getFullSymbol() const;
     virtual PieceType getType() const = 0;
-    virtual PieceInterface* clone() const = 0;  // Add pure virtual clone method
 };

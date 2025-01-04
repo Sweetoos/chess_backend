@@ -25,7 +25,7 @@ public:
     bool canCapture(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const;
     bool isEnPassant(const PieceInterface &piece, const Position &from, const Position &to, const Board &board) const;
 
-    bool isPathClear(const Position &from, const Position &, const Board &board) const;
+    bool isPathClear(const Position &from, const Position &to, const Board &board) const;
     void setEnPassantTurn(int turn) { m_enPassantTurn = turn; }
     void setMoveType(MoveType type) { m_moveType = type; }
     MoveType getMoveType() { return m_moveType; }
