@@ -27,43 +27,47 @@ void Chess::run()
         {
             std::print("enter move: ");
             std::getline(std::cin, move);
-            if (move.length() != 5)
-                throw std::invalid_argument("invalid argument, give it in format [{current position} {destination}]\n without piece notation, we will figure it out");
+            //draw mechanic
+            if(move=="draw")
+            {
+                std::println("Draw!");
+                break;
+            }
 
-            if (move[2] != ' ')
-                throw std::invalid_argument("invalid argument, no space between positions");
-            char fromCol = std::tolower(move[0]);
-            int fromRow = move[1] - '0';
-            char toCol = std::tolower(move[3]);
-            int toRow = move[4] - '0';
+            if (move.length() == 5 && move[2] == ' ') {
+                char fromCol = std::tolower(move[0]);
+                int fromRow = move[1] - '0';
+                char toCol = std::tolower(move[3]);
+                int toRow = move[4] - '0';
 
-            if (fromCol < 'a' || fromCol > 'h' || toCol < 'a' || toCol > 'h' || fromRow < 1 || fromRow > 8 || toRow < 1 || toRow > 8)
-                throw std::out_of_range("move is out of bounds; columns must be a-h and rows 1-8");
+                if (fromCol < 'a' || fromCol > 'h' || toCol < 'a' || toCol > 'h' || fromRow < 1 || fromRow > 8 || toRow < 1 || toRow > 8)
+                    throw std::out_of_range("move is out of bounds; columns must be a-h and rows 1-8");
 
-            Position from(fromCol, fromRow);
-            Position to(toCol, toRow);
+                Position from(fromCol, fromRow);
+                Position to(toCol, toRow);
 
-            if (m_gm.movePiece(from, to)) {
-                m_gm.displayBoard();
-                
-                if (m_gm.isKingInCheck(m_gm.getCurrentTurnColor()))
-                    std::println("CHECK!");
+                if (m_gm.movePiece(from, to)) {
+                    m_gm.displayBoard();
+                    
+                    if (m_gm.isKingInCheck(m_gm.getCurrentTurnColor()))
+                        std::println("CHECK!");
 
-                if (m_gm.isCheckmate(m_gm.getCurrentTurnColor()))
-                {
-                    std::println("Checkmate! {0} wins!", 
-                        (m_gm.getCurrentTurnColor() == PieceColor::BLACK) ? "White" : "Black");
-                    break;
+                    if (m_gm.isCheckmate(m_gm.getCurrentTurnColor()))
+                    {
+                        std::println("Checkmate! {0} wins!", 
+                            (m_gm.getCurrentTurnColor() == PieceColor::BLACK) ? "White" : "Black");
+                        break;
+                    }
                 }
+            }
+            else {
+                throw std::invalid_argument("invalid argument, give it in format [{current position} {destination}]\n without piece notation, we will figure it out");
             }
         }
         catch (const std::exception &e)
         {
             std::cerr << "Error: " << e.what() << '\n';
-            // if (std::string(e.what()).find("invalid argument") == std::string::npos)
-            // {
-            //     std::cerr << "Error: " << e.what() << '\n';
-            // }
+            m_gm.displayBoard(); // Display the board even if there is an error
         }
     }
 }
@@ -90,7 +94,7 @@ bool GameManager::movePiece(const Position &from, const Position &to)
         {
             m_moveType = MoveType::CASTLE;
             std::string castleNotation = (to.col > from.col) ? "O-O" : "O-O-O";
-            m_pgn.appendToFile(castleNotation + "\n");
+            m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row, castleNotation);
             m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
             if (m_currentTurnColor == PieceColor::WHITE)
                 turn++;
@@ -99,7 +103,7 @@ bool GameManager::movePiece(const Position &from, const Position &to)
     }
 
     // checks if the move is correct
-    MoveManager mm;
+    MoveManager mm(&m_pgn);  // Pass PgnNotation reference here
     if (!mm.isValidMove(from, to, m_board, *piece))
     {
         std::println("invalid move for {0}\n", piece->getFullSymbol());
@@ -112,12 +116,18 @@ bool GameManager::movePiece(const Position &from, const Position &to)
     bool isEnPassant = false;
 
     // en passant check
-    if (piece->getType() == PieceType::PAWN && !isCapture && mm.isEnPassant(*piece, from, to, m_board))
+    if (piece->getType() == PieceType::PAWN && !isCapture)
     {
-        isCapture = true;
-        isEnPassant = true;
-        Position capturedPawnPos(to.col, from.row);
-        m_board.removePiece(capturedPawnPos);
+        MoveManager mm(&m_pgn);
+        if (mm.isEnPassant(*piece, from, to, m_board))
+        {
+            isCapture = true;
+            isEnPassant = true;
+            // Capture the enemy pawn (which is on the same rank as the capturing pawn's starting position)
+            Position capturedPawnPos(to.col, from.row);
+            m_board.removePiece(capturedPawnPos);
+            m_moveType = MoveType::CAPTURE;
+        }
     }
 
     // regular capture
@@ -141,12 +151,15 @@ bool GameManager::movePiece(const Position &from, const Position &to)
         PieceType promotionType = handlePromotion(to);
         piece = m_board.getPieceAt(to); // Update the piece pointer to the new piece
         std::string promotionNotation = std::string(1, from.col) + std::to_string(from.row) + " -> " + std::string(1, to.col) + std::to_string(to.row) + "=" + promotionTypeToString(promotionType);
-        m_pgn.appendToFile(promotionNotation + "\n");
+        m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row, promotionNotation);
         m_moveType = MoveType::PROMOTION;
-        m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row);
         m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
         if (m_currentTurnColor == PieceColor::WHITE)
             turn++;
+        displayBoard(); // Display the board after promotion
+        std::println("TURN {0}", GameManager::turn);
+        std::println("{0} move", (getCurrentTurnColor() == PieceColor::WHITE ? "white" : "black"));
+        std::print("enter move: ");
         return true;
     }
     else
@@ -167,7 +180,7 @@ bool GameManager::movePiece(const Position &from, const Position &to)
         }
     }
     //std::println("moved {0} to {1}{2}",piece->getFullSymbol(),to.col,to.row);
-    m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row);
+    m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row, "");
 
     // change turn
     m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
@@ -221,6 +234,7 @@ bool GameManager::handleCastling(const Position &from, const Position &to)
 
 PieceType GameManager::handlePromotion(const Position &pos)
 {
+    m_promotionFlag=true;
     char promotion;
     do
     {
@@ -257,7 +271,7 @@ PieceType GameManager::handlePromotion(const Position &pos)
 
 bool GameManager::isSquareUnderAttack(const Position &pos, PieceColor defendingColor) const
 {
-    MoveManager mm;
+    MoveManager mm(&m_pgn);  // Fixed: use address-of operator to pass pointer
     for (int row = 1; row <= 8; row++)
     {
         for (char col = 'a'; col <= 'h'; col++)
@@ -273,6 +287,7 @@ bool GameManager::isSquareUnderAttack(const Position &pos, PieceColor defendingC
     }
     return false;
 }
+
 bool GameManager::isKingInCheck(PieceColor color) const
 {
     Position kingPos('a', 1); // default value
@@ -305,7 +320,7 @@ bool GameManager::isCheckmate(PieceColor color)
                 for (char toCol = 'a'; toCol <= 'h'; toCol++)
                 {
                     Position to(toCol, toRow);
-                    MoveManager mm;
+                    MoveManager mm(&m_pgn); // Fix: pass pointer to m_pgn
                     if (!mm.isValidMove(from, to, m_board, *piece))
                         continue;
                     PieceInterface *capturedPiece = m_board.getPieceAt(to);

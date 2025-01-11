@@ -3,6 +3,7 @@
 #include "classes.h"
 #include <print>
 #include "move.h"
+#include "pgn.h"  // Add this include
 
 class GameManager
 {
@@ -12,6 +13,7 @@ private:
     PieceFactory &m_factory;
     MoveType m_moveType = MoveType::MOVE;
     PgnNotation m_pgn;  // Add this line
+    bool m_promotionFlag = false;
 
 public:
     static int turn;
@@ -29,6 +31,8 @@ public:
     bool isFirstMove(const PieceInterface *piece);
     PgnNotation& getPgn() { return m_pgn; }  
     std::string promotionTypeToString(PieceType type) const;  // Add this line
+    void resetPromotionFlag() { m_promotionFlag = false; }
+    bool getPromotionFlag() const { return m_promotionFlag; }
 };
 
 class Chess

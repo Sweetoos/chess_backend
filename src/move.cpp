@@ -18,9 +18,7 @@ bool MoveManager::isValidMove(const Position &from, const Position &to, const Bo
     switch (type) {
         case PieceType::PAWN:
         {
-            bool isValid = isPawnMoveValid(from, to, board, piece);
-            // promotion
-            result = isValid;
+            result = isPawnMoveValid(from, to, board, piece);
             break;
         }
         case PieceType::QUEEN:
@@ -69,21 +67,29 @@ bool MoveManager::isPawnMoveValid(const Position &from, const Position &to, cons
     // diagonal capture
     if (to.row == from.row + direction && std::abs(to.col - from.col) == 1)
     {
+        // Regular capture
         PieceInterface *targetPiece = board.getPieceAt(to);
-        return targetPiece != nullptr && targetPiece->getColor() != piece.getColor();
-    }
-
-    // en passant capture
-    if (
-        (piece.getType() == PieceType::PAWN) &&
-        (((piece.getColor() == PieceColor::WHITE) && (piece.getPosition().row == 5)) ||
-         ((piece.getColor() == PieceColor::BLACK) && (piece.getPosition().row == 4))) &&
-        (to.row == from.row + direction && std::abs(to.col - from.col) == 1))
-    {
-        // Check if the previous move was a double move from a pawn
-        const MoveInfo& lastMove = PgnNotation().getLastMove();
-        if (lastMove.type == PieceType::PAWN && std::abs(lastMove.fromRow - lastMove.toRow) == 2) {
+        if (targetPiece != nullptr && targetPiece->getColor() != piece.getColor())
             return true;
+
+        // En passant capture
+        int enPassantRow = (piece.getColor() == PieceColor::WHITE) ? 5 : 4;
+        if (from.row == enPassantRow)
+        {
+            const MoveInfo& lastMove = m_pgn->getLastMove();
+            if (lastMove.type == PieceType::PAWN && 
+                lastMove.fromRow == (piece.getColor() == PieceColor::WHITE ? 7 : 2) &&
+                lastMove.toRow == from.row &&
+                lastMove.toCol == to.col)
+            {
+                Position enemyPawnPos(to.col, from.row);
+                PieceInterface* enemyPawn = board.getPieceAt(enemyPawnPos);
+                if (enemyPawn && enemyPawn->getType() == PieceType::PAWN && 
+                    enemyPawn->getColor() != piece.getColor())
+                {
+                    return true;
+                }
+            }
         }
     }
     return false;
@@ -157,14 +163,28 @@ bool MoveManager::isEnPassant(const PieceInterface &piece, const Position &from,
     if (piece.getType() != PieceType::PAWN)
         return false;
 
+    int direction = piece.getColor() == PieceColor::WHITE ? 1 : -1;
     int enPassantRow = (piece.getColor() == PieceColor::WHITE) ? 5 : 4;
-    if (to.row != enPassantRow)
+
+    // Check basic en passant conditions
+    if (from.row != enPassantRow || 
+        to.row != from.row + direction || 
+        std::abs(to.col - from.col) != 1)
         return false;
 
-    Position enemyPawnPos(to.col, from.row);
-    PieceInterface *enemyPawn = board.getPieceAt(enemyPawnPos);
+    // Check if the last move was a double pawn move by the opponent
+    const MoveInfo& lastMove = m_pgn->getLastMove();
+    if (lastMove.type != PieceType::PAWN || 
+        lastMove.toCol != to.col || 
+        lastMove.toRow != from.row)
+        return false;
 
-    return enemyPawn && enemyPawn->getType() == PieceType::PAWN && enemyPawn->getColor() != piece.getColor();
+    // Verify the enemy pawn is present
+    Position enemyPawnPos(to.col, from.row);
+    PieceInterface* enemyPawn = board.getPieceAt(enemyPawnPos);
+    return enemyPawn && 
+           enemyPawn->getType() == PieceType::PAWN && 
+           enemyPawn->getColor() != piece.getColor();
 }
 
 /// @brief checks if piece can move to given square

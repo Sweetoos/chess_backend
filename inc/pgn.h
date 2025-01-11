@@ -41,8 +41,8 @@ public:
     void fileHeader();
     int getCurrentTurn();
     void appendToFile(const std::string &line);
-    void writeTurn(const PieceColor &color, const PieceType &type, const char &fromCol, 
-                  const int &fromRow, const char &toCol, const int &toRow);
+    void writeTurn(const PieceColor &color, const PieceType &type, const char &fromCol,
+                   const int &fromRow, const char &toCol, const int &toRow, const std::string &specialMove);
     MoveInfo getLastMove() const;
     bool hasPieceMoved(const PieceType &type, const PieceColor &color, const char &col) const;
     std::string promotionTypeToString(PieceType type) const;  // Add this line

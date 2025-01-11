@@ -76,7 +76,7 @@ void PgnNotation::appendToFile(const std::string &line)
 }
 
 void PgnNotation::writeTurn(const PieceColor &color, const PieceType &type, const char &fromCol,
-                            const int &fromRow, const char &toCol, const int &toRow)
+                            const int &fromRow, const char &toCol, const int &toRow, const std::string &specialMove)
 {
     try
     {
@@ -103,12 +103,14 @@ void PgnNotation::writeTurn(const PieceColor &color, const PieceType &type, cons
             break;
         }
 
-        std::string move = pieceSymbol + std::string(1, fromCol) + std::to_string(fromRow) + " -> " + pieceSymbol + std::string(1, toCol) + std::to_string(toRow);
-
-        // Handle promotion
-        if (type == PieceType::PAWN && (toRow == 1 || toRow == 8))
+        std::string move;
+        if (!specialMove.empty())
         {
-            move += "=" + promotionTypeToString(type);
+            move = specialMove;
+        }
+        else
+        {
+            move = pieceSymbol + std::string(1, fromCol) + std::to_string(fromRow) + " -> " + pieceSymbol + std::string(1, toCol) + std::to_string(toRow);
         }
 
         // Write the move to the file
