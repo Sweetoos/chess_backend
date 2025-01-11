@@ -1,4 +1,3 @@
-// board.h
 #pragma once
 #include "classes.h"
 #include <list>
@@ -27,9 +26,8 @@ private:
 
 public:
     Board();
-    ~Board();
-    Board(const Board& other); // Add copy constructor declaration
-    Board& operator=(const Board& other);  // Add assignment operator
+    Board(const Board& other); 
+    Board& operator=(const Board& other); 
 
     void putPiece(PieceInterface *piece);
     void removePiece(const Position &position);

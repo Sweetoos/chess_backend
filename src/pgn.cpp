@@ -83,55 +83,32 @@ void PgnNotation::writeTurn(const PieceColor &color, const PieceType &type, cons
         std::string pieceSymbol;
         switch (type)
         {
-        case PieceType::KING:
-            pieceSymbol = "K";
-            break;
-        case PieceType::QUEEN:
-            pieceSymbol = "Q";
-            break;
-        case PieceType::ROOK:
-            pieceSymbol = "R";
-            break;
-        case PieceType::BISHOP:
-            pieceSymbol = "B";
-            break;
-        case PieceType::KNIGHT:
-            pieceSymbol = "N";
-            break;
-        case PieceType::PAWN:
-            pieceSymbol = "";
-            break;
+        case PieceType::KING:   pieceSymbol = "K"; break;
+        case PieceType::QUEEN:  pieceSymbol = "Q"; break;
+        case PieceType::ROOK:   pieceSymbol = "R"; break;
+        case PieceType::BISHOP: pieceSymbol = "B"; break;
+        case PieceType::KNIGHT: pieceSymbol = "N"; break;
+        case PieceType::PAWN:   pieceSymbol = ""; break;
         }
 
         std::string move;
-        if (!specialMove.empty())
-        {
+        if (!specialMove.empty()) {
+            // For castling or promotion
             move = specialMove;
         }
-        else
-        {
-            move = pieceSymbol + std::string(1, fromCol) + std::to_string(fromRow) + " -> " + pieceSymbol + std::string(1, toCol) + std::to_string(toRow);
+        else {
+            move = pieceSymbol + std::string(1, fromCol) + std::to_string(fromRow) + 
+                  " -> " + pieceSymbol + std::string(1, toCol) + std::to_string(toRow);
         }
 
-        // Write the move to the file
-        if (color == PieceColor::WHITE)
-        {
+        if (color == PieceColor::WHITE) {
             appendToFile(std::to_string(getCurrentTurn()) + ". " + move + " | ");
         }
-        else
-        {
+        else {
             appendToFile(move + "\n");
         }
 
-        // Update the last move
         m_lastMove = {type, fromRow, toRow, fromCol, toCol, color};
-
-        // Mark the piece as moved
-        if (type == PieceType::KING || type == PieceType::ROOK)
-        {
-            std::string key = std::string(1, fromCol) + std::to_string(static_cast<int>(color));
-            m_pieceMoved[key] = true;
-        }
     }
     catch (const std::exception &e)
     {

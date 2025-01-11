@@ -1,4 +1,3 @@
-//king.h
 #pragma once
 
 #include "classes.h"

@@ -1,4 +1,3 @@
-// chess.cpp
 #include <string>
 #include <iostream>
 #include <stdexcept>
@@ -67,7 +66,7 @@ void Chess::run()
         catch (const std::exception &e)
         {
             std::cerr << "Error: " << e.what() << '\n';
-            m_gm.displayBoard(); // Display the board even if there is an error
+            m_gm.displayBoard(); 
         }
     }
 }
@@ -76,11 +75,10 @@ bool GameManager::movePiece(const Position &from, const Position &to)
 {
     auto *piece = m_board.getPieceAt(from);
 
-    // if there is no piece at given square
-    if (piece == nullptr)
+    if (piece == nullptr) {
         throw std::runtime_error("No piece found at the given position");
+    }
 
-    // if chosen piece is of a wrong color
     if (piece->getColor() != m_currentTurnColor)
     {
         std::println("it's not {0}'s turn", (m_currentTurnColor == PieceColor::WHITE) ? "black" : "white");
@@ -103,7 +101,7 @@ bool GameManager::movePiece(const Position &from, const Position &to)
     }
 
     // checks if the move is correct
-    MoveManager mm(&m_pgn);  // Pass PgnNotation reference here
+    MoveManager mm(&m_pgn);  
     if (!mm.isValidMove(from, to, m_board, *piece))
     {
         std::println("invalid move for {0}\n", piece->getFullSymbol());
@@ -123,7 +121,6 @@ bool GameManager::movePiece(const Position &from, const Position &to)
         {
             isCapture = true;
             isEnPassant = true;
-            // Capture the enemy pawn (which is on the same rank as the capturing pawn's starting position)
             Position capturedPawnPos(to.col, from.row);
             m_board.removePiece(capturedPawnPos);
             m_moveType = MoveType::CAPTURE;
@@ -149,18 +146,16 @@ bool GameManager::movePiece(const Position &from, const Position &to)
     if (piece->getType() == PieceType::PAWN && (to.row == 1 || to.row == 8))
     {
         PieceType promotionType = handlePromotion(to);
-        piece = m_board.getPieceAt(to); // Update the piece pointer to the new piece
-        std::string promotionNotation = std::string(1, from.col) + std::to_string(from.row) + " -> " + std::string(1, to.col) + std::to_string(to.row) + "=" + promotionTypeToString(promotionType);
+        piece = m_board.getPieceAt(to);
+        std::string promotionNotation = std::string(1, from.col) + std::to_string(from.row) + 
+                                      " -> " + std::string(1, to.col) + std::to_string(to.row) + 
+                                      "=" + promotionTypeToString(promotionType);
         m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row, promotionNotation);
         m_moveType = MoveType::PROMOTION;
         m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
         if (m_currentTurnColor == PieceColor::WHITE)
             turn++;
-        displayBoard(); // Display the board after promotion
-        std::println("TURN {0}", GameManager::turn);
-        std::println("{0} move", (getCurrentTurnColor() == PieceColor::WHITE ? "white" : "black"));
-        std::print("enter move: ");
-        return true;
+        return true;  
     }
     else
     {
@@ -234,36 +229,31 @@ bool GameManager::handleCastling(const Position &from, const Position &to)
 
 PieceType GameManager::handlePromotion(const Position &pos)
 {
-    m_promotionFlag=true;
+    m_promotionFlag = true;
     char promotion;
-    do
-    {
-        std::cout << "Promote pawn to (Q/R/B/N): ";
-        std::cin >> promotion;
-        promotion = std::toupper(promotion);
-    } while (promotion != 'Q' && promotion != 'R' && promotion != 'B' && promotion != 'N');
+    std::string input;
+    
+    std::cout << "Promote pawn to (Q/R/B/N): ";
+    std::getline(std::cin, input);
+    while (input.empty() || std::string("QRBN").find(std::toupper(input[0])) == std::string::npos) {
+        std::cout << "Invalid input. Promote pawn to (Q/R/B/N): ";
+        std::getline(std::cin, input);
+    }
+    promotion = std::toupper(input[0]);
 
     PieceColor color = m_board.getPieceAt(pos)->getColor();
-    m_board.removePiece(pos, true); // Ensure the pawn is deleted
+    m_board.removePiece(pos, true);
 
     PieceType newType;
     switch (promotion)
     {
-    case 'Q':
-        newType = PieceType::QUEEN;
-        break;
-    case 'R':
-        newType = PieceType::ROOK;
-        break;
-    case 'B':
-        newType = PieceType::BISHOP;
-        break;
-    case 'N':
-        newType = PieceType::KNIGHT;
-        break;
-    default:
-        newType = PieceType::QUEEN;
+    case 'Q': newType = PieceType::QUEEN; break;
+    case 'R': newType = PieceType::ROOK; break;
+    case 'B': newType = PieceType::BISHOP; break;
+    case 'N': newType = PieceType::KNIGHT; break;
+    default: newType = PieceType::QUEEN; break;
     }
+    
     PieceInterface *newPiece = m_factory.createAndStorePiece(newType, pos, color);
     m_board.putPiece(newPiece);
     return newType;
@@ -271,7 +261,7 @@ PieceType GameManager::handlePromotion(const Position &pos)
 
 bool GameManager::isSquareUnderAttack(const Position &pos, PieceColor defendingColor) const
 {
-    MoveManager mm(&m_pgn);  // Fixed: use address-of operator to pass pointer
+    MoveManager mm(&m_pgn);  
     for (int row = 1; row <= 8; row++)
     {
         for (char col = 'a'; col <= 'h'; col++)
@@ -290,7 +280,7 @@ bool GameManager::isSquareUnderAttack(const Position &pos, PieceColor defendingC
 
 bool GameManager::isKingInCheck(PieceColor color) const
 {
-    Position kingPos('a', 1); // default value
+    Position kingPos('a', 1); 
     for (int row = 1; row <= 8; row++)
     {
         for (char col = 'a'; col <= 'h'; col++)
@@ -320,7 +310,7 @@ bool GameManager::isCheckmate(PieceColor color)
                 for (char toCol = 'a'; toCol <= 'h'; toCol++)
                 {
                     Position to(toCol, toRow);
-                    MoveManager mm(&m_pgn); // Fix: pass pointer to m_pgn
+                    MoveManager mm(&m_pgn); 
                     if (!mm.isValidMove(from, to, m_board, *piece))
                         continue;
                     PieceInterface *capturedPiece = m_board.getPieceAt(to);

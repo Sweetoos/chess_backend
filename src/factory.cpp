@@ -1,4 +1,3 @@
-//factory.cpp
 #include "classes.h"
 #include "factory.h"
 

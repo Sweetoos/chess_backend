@@ -1,4 +1,3 @@
-// move.cpp
 #include "classes.h"
 #include "move.h"
 #include "pgn.h"
@@ -53,8 +52,9 @@ bool MoveManager::isPawnMoveValid(const Position &from, const Position &to, cons
     int direction = piece.getColor() == PieceColor::WHITE ? 1 : -1;
 
     // single move
-    if (from.col == to.col && to.row == from.row + direction)
+    if (from.col == to.col && to.row == from.row + direction) {
         return !board.getPieceAt(to);
+    }
 
     // double move
     int startingRank = (piece.getColor() == PieceColor::WHITE) ? 2 : 7;
@@ -67,29 +67,51 @@ bool MoveManager::isPawnMoveValid(const Position &from, const Position &to, cons
     // diagonal capture
     if (to.row == from.row + direction && std::abs(to.col - from.col) == 1)
     {
-        // Regular capture
         PieceInterface *targetPiece = board.getPieceAt(to);
-        if (targetPiece != nullptr && targetPiece->getColor() != piece.getColor())
-            return true;
+        if (targetPiece != nullptr) {
+            return targetPiece->getColor() != piece.getColor();
+        }
 
         // En passant capture
         int enPassantRow = (piece.getColor() == PieceColor::WHITE) ? 5 : 4;
         if (from.row == enPassantRow)
         {
             const MoveInfo& lastMove = m_pgn->getLastMove();
-            if (lastMove.type == PieceType::PAWN && 
-                lastMove.fromRow == (piece.getColor() == PieceColor::WHITE ? 7 : 2) &&
-                lastMove.toRow == from.row &&
-                lastMove.toCol == to.col)
-            {
-                Position enemyPawnPos(to.col, from.row);
-                PieceInterface* enemyPawn = board.getPieceAt(enemyPawnPos);
-                if (enemyPawn && enemyPawn->getType() == PieceType::PAWN && 
-                    enemyPawn->getColor() != piece.getColor())
-                {
-                    return true;
-                }
+
+            Position enemyPawnPos(to.col, from.row);
+            PieceInterface* enemyPawn = board.getPieceAt(enemyPawnPos);
+            
+            if (enemyPawn) {
+                return (lastMove.type == PieceType::PAWN && 
+                        std::abs(lastMove.fromRow - lastMove.toRow) == 2 &&
+                        lastMove.toCol == to.col &&
+                        enemyPawn->getType() == PieceType::PAWN && 
+                        enemyPawn->getColor() != piece.getColor());
             }
+        }
+    }
+
+    // en passant capture
+    if (piece.getType() == PieceType::PAWN)
+    {
+        int enPassantRow = (piece.getColor() == PieceColor::WHITE) ? 5 : 4;
+        if (from.row == enPassantRow &&
+            std::abs(to.col - from.col) == 1 && 
+            to.row == from.row + direction)
+        {
+            const MoveInfo& lastMove = m_pgn->getLastMove();
+            
+            Position enemyPawnPos(to.col, from.row);
+            PieceInterface* enemyPawn = board.getPieceAt(enemyPawnPos);
+            
+            bool isValid = lastMove.type == PieceType::PAWN && 
+                          std::abs(lastMove.fromRow - lastMove.toRow) == 2 &&
+                          lastMove.toCol == to.col && 
+                          lastMove.toRow == from.row &&
+                          enemyPawn && 
+                          enemyPawn->getColor() != piece.getColor();
+            
+            return isValid;
         }
     }
     return false;
@@ -166,20 +188,17 @@ bool MoveManager::isEnPassant(const PieceInterface &piece, const Position &from,
     int direction = piece.getColor() == PieceColor::WHITE ? 1 : -1;
     int enPassantRow = (piece.getColor() == PieceColor::WHITE) ? 5 : 4;
 
-    // Check basic en passant conditions
     if (from.row != enPassantRow || 
         to.row != from.row + direction || 
         std::abs(to.col - from.col) != 1)
         return false;
 
-    // Check if the last move was a double pawn move by the opponent
     const MoveInfo& lastMove = m_pgn->getLastMove();
     if (lastMove.type != PieceType::PAWN || 
         lastMove.toCol != to.col || 
         lastMove.toRow != from.row)
         return false;
 
-    // Verify the enemy pawn is present
     Position enemyPawnPos(to.col, from.row);
     PieceInterface* enemyPawn = board.getPieceAt(enemyPawnPos);
     return enemyPawn && 

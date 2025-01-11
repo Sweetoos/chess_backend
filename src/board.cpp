@@ -1,4 +1,3 @@
-// board.cpp
 #include "classes.h"
 #include <iostream>
 #include <string>
@@ -18,24 +17,20 @@ Board::Board()
     }
 }
 
-// Add copy constructor implementation
 Board::Board(const Board& other) {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             m_grid[i][j] = other.m_grid[i][j];
             PieceInterface* piece = other.m_grid[i][j].getPiece();
             if (piece) {
-                // Instead of cloning, we just copy the pointer
                 m_grid[i][j].setPiece(piece);
             }
         }
     }
 }
 
-// Add assignment operator implementation
 Board& Board::operator=(const Board& other) {
     if (this != &other) {
-        // Clear existing pieces
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 PieceInterface* piece = m_grid[i][j].getPiece();
@@ -45,24 +40,17 @@ Board& Board::operator=(const Board& other) {
             }
         }
         
-        // Copy new pieces
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 m_grid[i][j] = other.m_grid[i][j];
                 PieceInterface* piece = other.m_grid[i][j].getPiece();
                 if (piece) {
-                    // Instead of cloning, we just copy the pointer
                     m_grid[i][j].setPiece(piece);
                 }
             }
         }
     }
     return *this;
-}
-
-Board::~Board()
-{
-    // not needed for m_grid deletion
 }
 
 void Board::putPiece(PieceInterface *piece)

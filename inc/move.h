@@ -1,8 +1,7 @@
-// move.h
 #ifndef MOVE_H
 #define MOVE_H
 #include "classes.h"
-#include "pgn.h"  // Add this include if not already present
+#include "pgn.h" 
 
 class MoveManager
 {
@@ -11,10 +10,10 @@ private:
     MoveType m_moveType=MoveType::MOVE; 
     std::string m_movePrefix;
     std::string m_moveSuffix;
-    const PgnNotation* m_pgn;  // Make pointer const
+    const PgnNotation* m_pgn; 
 
 public:
-    MoveManager(const PgnNotation* pgn) : m_pgn(pgn) {}  // Accept const pointer
+    MoveManager(const PgnNotation* pgn) : m_pgn(pgn) {} 
 
     // move validators
     bool isValidMove(const Position &from, const Position &to, const Board &board, const PieceInterface &piece) const;

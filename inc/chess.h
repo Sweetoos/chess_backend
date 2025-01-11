@@ -1,9 +1,8 @@
-// chess.h
 #pragma once
 #include "classes.h"
 #include <print>
 #include "move.h"
-#include "pgn.h"  // Add this include
+#include "pgn.h"  
 
 class GameManager
 {
@@ -12,12 +11,12 @@ private:
     PieceColor m_currentTurnColor = PieceColor::WHITE;
     PieceFactory &m_factory;
     MoveType m_moveType = MoveType::MOVE;
-    PgnNotation m_pgn;  // Add this line
+    PgnNotation m_pgn;  
     bool m_promotionFlag = false;
 
 public:
     static int turn;
-    bool movePiece(const Position &from, const Position &to);  // Changed return type to bool
+    bool movePiece(const Position &from, const Position &to);  
 
     GameManager(PieceFactory &factory) : m_factory(factory) {}
     void setupBoard();
@@ -30,7 +29,7 @@ public:
     bool isCheckmate(PieceColor color);
     bool isFirstMove(const PieceInterface *piece);
     PgnNotation& getPgn() { return m_pgn; }  
-    std::string promotionTypeToString(PieceType type) const;  // Add this line
+    std::string promotionTypeToString(PieceType type) const;  
     void resetPromotionFlag() { m_promotionFlag = false; }
     bool getPromotionFlag() const { return m_promotionFlag; }
 };

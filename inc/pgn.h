@@ -45,7 +45,7 @@ public:
                    const int &fromRow, const char &toCol, const int &toRow, const std::string &specialMove);
     MoveInfo getLastMove() const;
     bool hasPieceMoved(const PieceType &type, const PieceColor &color, const char &col) const;
-    std::string promotionTypeToString(PieceType type) const;  // Add this line
+    std::string promotionTypeToString(PieceType type) const;  
 };
 
 #endif
