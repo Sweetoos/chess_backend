@@ -26,11 +26,23 @@ void Chess::run()
         {
             std::print("enter move: ");
             std::getline(std::cin, move);
-            //draw mechanic
-            if(move=="draw")
+            
+            // Draw by agreement
+            if(move == "draw")
             {
-                std::println("Draw!");
-                break;
+                std::print("Other player, do you accept the draw? (y/n): ");
+                std::string response;
+                std::getline(std::cin, response);
+                if(response == "y" || response == "yes")
+                {
+                    std::println("Game drawn by mutual agreement!");
+                    break;
+                }
+                else
+                {
+                    std::println("Draw declined, continue playing.");
+                    continue;
+                }
             }
 
             if (move.length() == 5 && move[2] == ' ') {
@@ -47,6 +59,12 @@ void Chess::run()
 
                 if (m_gm.movePiece(from, to)) {
                     m_gm.displayBoard();
+                    
+                    // Check for insufficient material draw
+                    if (m_gm.hasInsufficientMaterial()) {
+                        std::println("Draw by insufficient material!");
+                        break;
+                    }
                     
                     if (m_gm.isKingInCheck(m_gm.getCurrentTurnColor()))
                         std::println("CHECK!");
@@ -420,4 +438,65 @@ std::string GameManager::promotionTypeToString(PieceType type) const
     default:
         return "";
     }
+}
+
+bool GameManager::hasInsufficientMaterial() const 
+{
+    // Case 1: Only kings
+    if (hasOnlyKing(PieceColor::WHITE) && hasOnlyKing(PieceColor::BLACK)) {
+        return true;
+    }
+    
+    // Case 2: King and minor piece vs King
+    if ((hasOnlyKing(PieceColor::WHITE) && hasOnlyKingAndMinorPiece(PieceColor::BLACK)) ||
+        (hasOnlyKing(PieceColor::BLACK) && hasOnlyKingAndMinorPiece(PieceColor::WHITE))) {
+        return true;
+    }
+    
+    return false;
+}
+
+bool GameManager::hasOnlyKing(PieceColor color) const 
+{
+    int pieceCount = 0;
+    bool hasKing = false;
+    
+    for (int row = 1; row <= 8; row++) {
+        for (char col = 'a'; col <= 'h'; col++) {
+            PieceInterface* piece = m_board.getPieceAt(Position(col, row));
+            if (piece && piece->getColor() == color) {
+                pieceCount++;
+                if (piece->getType() == PieceType::KING) {
+                    hasKing = true;
+                }
+            }
+        }
+    }
+    
+    return hasKing && pieceCount == 1;
+}
+
+bool GameManager::hasOnlyKingAndMinorPiece(PieceColor color) const 
+{
+    int pieceCount = 0;
+    bool hasKing = false;
+    bool hasMinorPiece = false;
+    
+    for (int row = 1; row <= 8; row++) {
+        for (char col = 'a'; col <= 'h'; col++) {
+            PieceInterface* piece = m_board.getPieceAt(Position(col, row));
+            if (piece && piece->getColor() == color) {
+                pieceCount++;
+                if (piece->getType() == PieceType::KING) {
+                    hasKing = true;
+                }
+                else if (piece->getType() == PieceType::BISHOP || 
+                         piece->getType() == PieceType::KNIGHT) {
+                    hasMinorPiece = true;
+                }
+            }
+        }
+    }
+    
+    return hasKing && hasMinorPiece && pieceCount == 2;
 }

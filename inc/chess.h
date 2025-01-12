@@ -32,6 +32,11 @@ public:
     std::string promotionTypeToString(PieceType type) const;  
     void resetPromotionFlag() { m_promotionFlag = false; }
     bool getPromotionFlag() const { return m_promotionFlag; }
+
+    // Add these new methods:
+    bool hasInsufficientMaterial() const;
+    bool hasOnlyKing(PieceColor color) const;
+    bool hasOnlyKingAndMinorPiece(PieceColor color) const;
 };
 
 class Chess
