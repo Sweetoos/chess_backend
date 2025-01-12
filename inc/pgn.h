@@ -26,12 +26,15 @@ private:
     std::string m_fileName;
     std::string m_move;
     std::ofstream m_outFile;
+    std::ifstream m_inFile;
 
     /// @brief <piece, piece color, last move starting position, last move destination>
     MoveInfo m_lastMove;
 
     /// @brief Track if the king or rook has moved
     std::unordered_map<std::string, bool> m_pieceMoved;
+
+    std::string m_originalContent; // Add this line
 
 public:
     PgnNotation();
@@ -46,6 +49,13 @@ public:
     MoveInfo getLastMove() const;
     bool hasPieceMoved(const PieceType &type, const PieceColor &color, const char &col) const;
     std::string promotionTypeToString(PieceType type) const;  
+    bool loadGame(const std::string& filename);
+    std::vector<std::pair<Position, Position>> parseMovesFromFile(const std::string& line, PieceColor currentTurnColor);
+    static std::vector<std::string> listSavedGames();
+    bool readNextLine(std::string& line);
+    void skipLine();
+    void writeResult(const std::string& result);  // Add this method
+    void initNewGame();  // Add this declaration
 };
 
 #endif

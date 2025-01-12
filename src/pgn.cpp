@@ -15,6 +15,11 @@ PgnNotation::PgnNotation()
         else
             std::cerr << "failed to create " << folderName << " folder" << '\n';
     }
+    // Remove automatic file creation from constructor
+}
+
+void PgnNotation::initNewGame()
+{
     m_fileName = assignFileName();
     openFile(m_fileName);
     fileHeader();
@@ -66,8 +71,12 @@ void PgnNotation::appendToFile(const std::string &line)
 {
     if (m_outFile.is_open())
     {
-        m_outFile << line;
-        m_outFile.flush();
+        // Only append if this line doesn't already exist in the original content
+        if (m_originalContent.find(line) == std::string::npos) {
+            m_outFile << line;
+            m_outFile.flush();
+            m_originalContent += line; // Update the stored content
+        }
     }
     else
     {
@@ -150,5 +159,149 @@ std::string PgnNotation::promotionTypeToString(PieceType type) const
         return "N";
     default:
         return "";
+    }
+}
+
+std::vector<std::string> PgnNotation::listSavedGames() {
+    namespace fs = std::filesystem;
+    std::vector<std::string> gameFiles;
+    const std::string folderName = "games";
+    
+    for (const auto& entry : fs::directory_iterator(folderName)) {
+        if (entry.path().extension() == ".txt") {
+            gameFiles.push_back(entry.path().filename().string());
+        }
+    }
+    return gameFiles;
+}
+
+bool PgnNotation::loadGame(const std::string& filename) {
+    if (m_outFile.is_open()) {
+        m_outFile.close();
+    }
+    if (m_inFile.is_open()) {
+        m_inFile.close();
+    }
+    
+    m_fileName = "games/" + filename;
+    
+    // First open input file for reading
+    m_inFile.open(m_fileName);
+    if (!m_inFile) {
+        throw std::runtime_error("Failed to open " + filename + " for reading");
+    }
+    
+    // Read the entire file content into memory
+    std::string content((std::istreambuf_iterator<char>(m_inFile)),
+                        std::istreambuf_iterator<char>());
+    m_inFile.close();
+    
+    // Store original content
+    m_originalContent = content;
+    
+    // Reopen the file for reading from the beginning
+    m_inFile.open(m_fileName);
+    
+    // Open output file in truncation mode (not append mode)
+    m_outFile.open(m_fileName, std::ios::out);
+    
+    if (!m_inFile || !m_outFile) {
+        throw std::runtime_error("Failed to open " + filename);
+    }
+    
+    // Write back the original content
+    m_outFile << m_originalContent;
+    m_outFile.flush();
+    
+    return true;
+}
+
+std::vector<std::pair<Position, Position>> PgnNotation::parseMovesFromFile(const std::string& line, PieceColor /* currentTurnColor */) {
+    std::vector<std::pair<Position, Position>> moves;
+    std::string fullLine = line;
+    
+    // Skip empty lines or malformed lines
+    if (fullLine.empty() || fullLine.find('.') == std::string::npos) {
+        return moves;
+    }
+    
+    // Extract turn number for validation
+    size_t dotPos = fullLine.find('.');
+    if (dotPos == std::string::npos) {
+        return moves;
+    }
+    
+    // Rest of the line after the turn number
+    fullLine = fullLine.substr(dotPos + 1);
+    
+    // Split into white and black moves
+    size_t separatorPos = fullLine.find('|');
+    std::string whitePart = fullLine.substr(0, separatorPos);
+    std::string blackPart = (separatorPos != std::string::npos) ? 
+                            fullLine.substr(separatorPos + 1) : "";
+    
+    // Trim spaces
+    whitePart.erase(0, whitePart.find_first_not_of(" \t"));
+    whitePart.erase(whitePart.find_last_not_of(" \t") + 1);
+    blackPart.erase(0, blackPart.find_first_not_of(" \t"));
+    blackPart.erase(blackPart.find_last_not_of(" \t") + 1);
+    
+    // Parse moves
+    auto parseSingleMove = [](const std::string& part) -> std::pair<Position, Position> {
+        size_t arrowPos = part.find("->");
+        if (arrowPos == std::string::npos) return {{0,0},{0,0}};
+        
+        std::string fromStr = part.substr(0, arrowPos);
+        std::string toStr = part.substr(arrowPos + 2);
+        
+        // Clean up the strings
+        fromStr.erase(0, fromStr.find_first_not_of(" \t"));
+        fromStr.erase(fromStr.find_last_not_of(" \t") + 1);
+        toStr.erase(0, toStr.find_first_not_of(" \t"));
+        toStr.erase(toStr.find_last_not_of(" \t") + 1);
+        
+        // Remove piece symbols
+        if (std::string("KQRBN").find(fromStr[0]) != std::string::npos) fromStr = fromStr.substr(1);
+        if (std::string("KQRBN").find(toStr[0]) != std::string::npos) toStr = toStr.substr(1);
+        
+        if (fromStr.length() >= 2 && toStr.length() >= 2) {
+            return {
+                Position(fromStr[0], fromStr[1] - '0'),
+                Position(toStr[0], toStr[1] - '0')
+            };
+        }
+        return {{0,0},{0,0}};
+    };
+    
+    // Parse white's move
+    auto whiteMove = parseSingleMove(whitePart);
+    if (whiteMove.first.col != 0) {
+        moves.push_back(whiteMove);
+    }
+    
+    // Parse black's move if it exists
+    if (!blackPart.empty()) {
+        auto blackMove = parseSingleMove(blackPart);
+        if (blackMove.first.col != 0) {
+            moves.push_back(blackMove);
+        }
+    }
+
+    return moves;
+}
+
+bool PgnNotation::readNextLine(std::string& line) {
+    return std::getline(m_inFile, line).good();
+}
+
+void PgnNotation::skipLine() {
+    std::string dummy;
+    std::getline(m_inFile, dummy);
+}
+
+void PgnNotation::writeResult(const std::string& result) {
+    if (m_outFile.is_open()) {
+        m_outFile << "\nResult: " << result << "\n";
+        m_outFile.flush();
     }
 }

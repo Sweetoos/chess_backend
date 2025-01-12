@@ -16,6 +16,134 @@ Chess::Chess(PieceFactory &factory) : m_gm(factory)
 
 void Chess::run()
 {
+    std::string command;
+    std::cout << "Enter 'new' for new game or 'load' to load saved game: ";
+    std::getline(std::cin, command);
+
+    if (command == "load") {
+        auto savedGames = PgnNotation::listSavedGames();
+        if (savedGames.empty()) {
+            std::println("No saved games found.");
+            return;
+        }
+
+        std::println("Available saved games:");
+        for (size_t i = 0; i < savedGames.size(); ++i) {
+            std::println("{0}: {1}", i + 1, savedGames[i]);
+        }
+
+        std::print("Enter game number to load: ");
+        std::string selection;
+        std::getline(std::cin, selection);
+        
+        try {
+            int index = std::stoi(selection) - 1;
+            if (index >= 0 && index < static_cast<int>(savedGames.size())) {
+                if (m_gm.getPgn().loadGame(savedGames[index])) {
+                    std::string line;
+                    m_gm.getPgn().skipLine(); // Skip header
+                    GameManager::turn = 1; // Reset turn counter
+                    m_gm.setupBoard(); // Reset board to initial state
+                    std::map<int, bool> processedTurns;
+                    
+                    std::cout << "DEBUG: Starting to load game from " << savedGames[index] << "\n";
+                    std::string lastValidLine;
+                    
+                    while (m_gm.getPgn().readNextLine(line)) {
+                        if (line.empty() || line[0] == '[' || line.starts_with("Result")) {
+                            std::cout << "DEBUG: Skipping line: " << line << "\n";
+                            continue;
+                        }
+                        
+                        std::cout << "DEBUG: Processing line: " << line << "\n";
+                        std::cout << "DEBUG: Current turn counter: " << GameManager::turn << "\n";
+                        std::cout << "DEBUG: Current turn color: " << 
+                            (m_gm.getCurrentTurnColor() == PieceColor::WHITE ? "WHITE" : "BLACK") << "\n";
+                        
+                        // Extract turn number from the line
+                        int lineTurn = 0;
+                        size_t dotPos = line.find('.');
+                        if (dotPos != std::string::npos) {
+                            try {
+                                lineTurn = std::stoi(line.substr(0, dotPos));
+                                std::cout << "DEBUG: Line turn number: " << lineTurn << "\n";
+                                
+                                if (processedTurns[lineTurn]) {
+                                    std::cout << "DEBUG: Skipping duplicate turn " << lineTurn << "\n";
+                                    continue;
+                                }
+                                
+                                // Store last valid line in case we need to roll back
+                                if (lineTurn == GameManager::turn) {
+                                    lastValidLine = line;
+                                }
+                                
+                                if (lineTurn < GameManager::turn) {
+                                    std::cout << "DEBUG: Skipping older turn " << lineTurn << "\n";
+                                    continue;
+                                }
+                                
+                                if (lineTurn > GameManager::turn) {
+                                    std::cout << "DEBUG: Found future turn " << lineTurn 
+                                            << ", but current turn is " << GameManager::turn 
+                                            << ". Skipping.\n";
+                                    continue;
+                                }
+                            } catch (...) {
+                                std::cout << "DEBUG: Failed to parse turn number from: " << line << "\n";
+                                continue;
+                            }
+                        }
+
+                        auto moves = m_gm.getPgn().parseMovesFromFile(line, m_gm.getCurrentTurnColor());
+                        std::cout << "DEBUG: Parsed " << moves.size() << " moves from line\n";
+                        
+                        bool turnSuccessful = true;
+                        for (const auto& [from, to] : moves) {
+                            auto* piece = m_gm.getBoard().getPieceAt(from);
+                            std::cout << "DEBUG: Attempting move from " << from.col << from.row 
+                                    << " to " << to.col << to.row 
+                                    << " (Turn " << GameManager::turn << ")"
+                                    << " Piece: " << (piece ? piece->getFullSymbol() : "nullptr") << "\n";
+                            
+                            if (!piece) {
+                                std::cout << "DEBUG: No piece at position " << from.col << from.row 
+                                        << ", skipping invalid move\n";
+                                turnSuccessful = false;
+                                break;
+                            }
+                            
+                            if (!m_gm.movePiece(from, to)) {
+                                std::cout << "DEBUG: Invalid move, skipping rest of turn\n";
+                                turnSuccessful = false;
+                                break;
+                            }
+                            std::cout << "DEBUG: Move successful\n";
+                        }
+                        
+                        if (turnSuccessful) {
+                            processedTurns[lineTurn] = true;
+                            std::cout << "DEBUG: Marked turn " << lineTurn << " as processed\n";
+                        }
+                    }
+                    
+                    m_gm.displayBoard();
+                    std::println("Game loaded successfully!");
+                }
+            }
+        } catch (const std::exception& e) {
+            std::println("Error loading game: {}", e.what());
+            return;
+        }
+    }
+    else if (command == "new") {
+        m_gm.getPgn().initNewGame(); // Only create file for new game
+    }
+    else {
+        std::println("Invalid command. Exiting...");
+        return;
+    }
+
     m_gm.displayBoard();
     while (true)
     {
@@ -36,6 +164,7 @@ void Chess::run()
                 if(response == "y" || response == "yes")
                 {
                     std::println("Game drawn by mutual agreement!");
+                    m_gm.getPgn().writeResult("1/2-1/2 (Draw by agreement)");
                     break;
                 }
                 else
@@ -43,6 +172,15 @@ void Chess::run()
                     std::println("Draw declined, continue playing.");
                     continue;
                 }
+            }
+
+            // Add save game command
+            if(move == "save") {
+                if (m_gm.getCurrentTurnColor() == PieceColor::BLACK) {
+                    m_gm.getPgn().appendToFile("\n"); // Add newline if black's move is interrupted
+                }
+                std::println("Game saved!");
+                break;
             }
 
             if (move.length() == 5 && move[2] == ' ') {
@@ -63,6 +201,7 @@ void Chess::run()
                     // Check for insufficient material draw
                     if (m_gm.hasInsufficientMaterial()) {
                         std::println("Draw by insufficient material!");
+                        m_gm.getPgn().writeResult("1/2-1/2 (Draw by insufficient material)");
                         break;
                     }
                     
@@ -71,8 +210,9 @@ void Chess::run()
 
                     if (m_gm.isCheckmate(m_gm.getCurrentTurnColor()))
                     {
-                        std::println("Checkmate! {0} wins!", 
-                            (m_gm.getCurrentTurnColor() == PieceColor::BLACK) ? "White" : "Black");
+                        std::string winner = (m_gm.getCurrentTurnColor() == PieceColor::BLACK) ? "White" : "Black";
+                        std::println("Checkmate! {0} wins!", winner);
+                        m_gm.getPgn().writeResult(winner == "White" ? "1-0" : "0-1");
                         break;
                     }
                 }
@@ -325,7 +465,7 @@ bool GameManager::isCheckmate(PieceColor color)
                 continue;
             for (int toRow = 1; toRow <= 8; toRow++)
             {
-                for (char toCol = 'a'; toCol <= 'h'; toCol++)
+                for (char toCol = 'a'; toCol <= 'h'; toCol++)  // Fix syntax error here
                 {
                     Position to(toCol, toRow);
                     MoveManager mm(&m_pgn); 
@@ -500,3 +640,5 @@ bool GameManager::hasOnlyKingAndMinorPiece(PieceColor color) const
     
     return hasKing && hasMinorPiece && pieceCount == 2;
 }
+
+const Board& GameManager::getBoard() const { return m_board; }

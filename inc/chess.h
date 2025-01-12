@@ -37,6 +37,9 @@ public:
     bool hasInsufficientMaterial() const;
     bool hasOnlyKing(PieceColor color) const;
     bool hasOnlyKingAndMinorPiece(PieceColor color) const;
+
+    // Add this new method
+    const Board& getBoard() const;
 };
 
 class Chess
