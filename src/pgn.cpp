@@ -316,7 +316,7 @@ bool PgnNotation::loadGame(const std::string& filename) {
     return true;
 }
 
-std::vector<std::pair<Position, Position>> PgnNotation::parseMovesFromFile(const std::string& line, PieceColor /* currentTurnColor */) {
+std::vector<std::pair<Position, Position>> PgnNotation::parseMovesFromFile(const std::string& line) {  // Remove currentTurnColor parameter
     std::cout << "DEBUG: Starting to parse moves from line: '" << line << "'\n";
     std::vector<std::pair<Position, Position>> moves;
     
@@ -333,6 +333,31 @@ std::vector<std::pair<Position, Position>> PgnNotation::parseMovesFromFile(const
     
     std::string movesStr = line.substr(dotPos + 1);
     std::cout << "DEBUG: Processing moves: '" << movesStr << "'\n";
+    
+    auto processCastling = [](const std::string& moveStr, PieceColor color) -> std::vector<std::pair<Position, Position>> {
+        std::vector<std::pair<Position, Position>> castleMoves;
+        int row = (color == PieceColor::WHITE) ? 1 : 8;
+        
+        if (moveStr.find("O-O-O") != std::string::npos) {
+            // Long castling (queenside)
+            std::cout << "DEBUG: Processing long castling\n";
+            castleMoves.push_back({
+                Position('e', row),  // King from
+                Position('c', row)   // King to
+            });
+            // Don't add rook move - it will be handled by handleCastling
+        }
+        else if (moveStr.find("O-O") != std::string::npos) {
+            // Short castling (kingside)
+            std::cout << "DEBUG: Processing short castling\n";
+            castleMoves.push_back({
+                Position('e', row),  // King from
+                Position('g', row)   // King to
+            });
+            // Don't add rook move - it will be handled by handleCastling
+        }
+        return castleMoves;
+    };
     
     auto processMove = [](const std::string& moveStr) -> std::pair<Position, Position> {
         std::cout << "DEBUG: Processing move: '" << moveStr << "'\n";
@@ -380,20 +405,38 @@ std::vector<std::pair<Position, Position>> PgnNotation::parseMovesFromFile(const
     // Split and process moves
     size_t pipePos = movesStr.find('|');
     if (pipePos != std::string::npos) {
-        // Process white's move
-        auto whiteMove = processMove(movesStr.substr(0, pipePos));
-        if (whiteMove.first.col != '\0') {
-            moves.push_back(whiteMove);
+        std::string whiteMove = movesStr.substr(0, pipePos);
+        std::cout << "DEBUG: Processing white move: '" << whiteMove << "'\n";
+        
+        // Check for castling first
+        if (whiteMove.find("O-O") != std::string::npos) {
+            auto castleMoves = processCastling(whiteMove, PieceColor::WHITE);
+            moves.insert(moves.end(), castleMoves.begin(), castleMoves.end());
+        } else {
+            auto whiteRegularMove = processMove(whiteMove);
+            if (whiteRegularMove.first.col != '\0') {
+                moves.push_back(whiteRegularMove);
+            }
         }
         
-        // Process black's move
-        auto blackMove = processMove(movesStr.substr(pipePos + 1));
-        if (blackMove.first.col != '\0') {
-            moves.push_back(blackMove);
+        // Process black's move if it exists
+        if (pipePos + 1 < movesStr.length()) {
+            std::string blackMove = movesStr.substr(pipePos + 1);
+            std::cout << "DEBUG: Processing black move: '" << blackMove << "'\n";
+            
+            if (blackMove.find("O-O") != std::string::npos) {
+                auto castleMoves = processCastling(blackMove, PieceColor::BLACK);
+                moves.insert(moves.end(), castleMoves.begin(), castleMoves.end());
+            } else {
+                auto blackRegularMove = processMove(blackMove);
+                if (blackRegularMove.first.col != '\0') {
+                    moves.push_back(blackRegularMove);
+                }
+            }
         }
     }
     
-    std::cout << "DEBUG: Parsed " << moves.size() << " moves\n";
+    std::cout << "DEBUG: Parsed " << moves.size() << " moves (including castling)\n";
     return moves;
 }
 

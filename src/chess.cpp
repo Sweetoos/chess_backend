@@ -66,7 +66,7 @@ void Chess::run()
                             continue;
                         }
 
-                        auto moves = m_gm.getPgn().parseMovesFromFile(line, m_gm.getCurrentTurnColor());
+                        auto moves = m_gm.getPgn().parseMovesFromFile(line);  // Remove currentTurnColor argument
                         std::cout << "DEBUG: Found " << moves.size() << " moves to replay\n";
                         
                         for (const auto& [from, to] : moves) {
@@ -221,9 +221,10 @@ bool GameManager::movePiece(const Position &from, const Position &to)
         return false;
     }
 
-    // castle
+    // Handle castling
     if (piece->getType() == PieceType::KING && std::abs(to.col - from.col) == 2)
     {
+        std::cout << "DEBUG: Attempting king castling move\n";
         if (handleCastling(from, to))
         {
             m_moveType = MoveType::CASTLE;
@@ -234,6 +235,7 @@ bool GameManager::movePiece(const Position &from, const Position &to)
                 turn++;
             return true;
         }
+        return false;
     }
 
     // checks if the move is correct
@@ -323,36 +325,34 @@ bool GameManager::movePiece(const Position &from, const Position &to)
 
 bool GameManager::handleCastling(const Position &from, const Position &to)
 {
+    std::cout << "DEBUG: Handling castling from " << from.col << from.row 
+              << " to " << to.col << to.row << "\n";
+              
     auto *king = m_board.getPieceAt(from);
-    if (!isFirstMove(king) || m_pgn.hasPieceMoved(PieceType::KING, king->getColor(), from.col))
+    if (!king || king->getType() != PieceType::KING) {
+        std::cout << "DEBUG: Not a king at source position\n";
         return false;
+    }
 
     char rookCol = (to.col > from.col) ? 'h' : 'a';
     char newRookCol = (to.col > from.col) ? 'f' : 'd';
+    std::cout << "DEBUG: Rook should move from " << rookCol << " to " << newRookCol << "\n";
 
     Position rookPos(rookCol, from.row);
     auto *rook = m_board.getPieceAt(rookPos);
-
-    if (!rook || !isFirstMove(rook) || m_pgn.hasPieceMoved(PieceType::ROOK, rook->getColor(), rookCol))
+    
+    if (!rook || rook->getType() != PieceType::ROOK) {
+        std::cout << "DEBUG: Not a rook at expected position " << rookCol << from.row << "\n";
         return false;
-
-    // check if path is clear and not under attack
-    int direction = (to.col > from.col) ? 1 : -1;
-    char col = from.col + direction;
-    while (col != rookCol)
-    {
-        Position pos(col, from.row);
-        if (m_board.getPieceAt(pos) != nullptr || isSquareUnderAttack(pos, king->getColor()))
-            return false;
-        col += direction;
     }
 
-    // check if king would pass through or land on attacked square
-    if (isSquareUnderAttack(from, king->getColor()) || 
-        isSquareUnderAttack(to, king->getColor()))
-        return false;
+    // Perform castling
+    std::cout << "DEBUG: Moving king from " << from.col << from.row 
+              << " to " << to.col << to.row << "\n";
+    std::cout << "DEBUG: Moving rook from " << rookPos.col << rookPos.row 
+              << " to " << newRookCol << rookPos.row << "\n";
 
-    // performing castle
+    // Move both pieces
     m_board.removePiece(from, false);
     m_board.removePiece(rookPos, false);
     king->move(to);

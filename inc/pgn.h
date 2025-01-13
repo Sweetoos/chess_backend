@@ -54,7 +54,7 @@ public:
     bool hasPieceMoved(const PieceType &type, const PieceColor &color, const char &col) const;
     std::string promotionTypeToString(PieceType type) const;  
     bool loadGame(const std::string& filename);
-    std::vector<std::pair<Position, Position>> parseMovesFromFile(const std::string& line, PieceColor currentTurnColor);
+    std::vector<std::pair<Position, Position>> parseMovesFromFile(const std::string& line);  // Remove currentTurnColor parameter
     static std::vector<std::string> listSavedGames();
     bool readNextLine(std::string& line);
     void skipLine();
