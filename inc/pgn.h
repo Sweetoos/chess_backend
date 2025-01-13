@@ -35,6 +35,10 @@ private:
     std::unordered_map<std::string, bool> m_pieceMoved;
 
     std::string m_originalContent; // Add this line
+    int m_savedTurn;
+    bool m_whiteHasMoved;
+    std::string getCurrentDateString() const;  // Add this helper method
+    std::string getPieceSymbol(PieceType type);  // Add this declaration
 
 public:
     PgnNotation();
@@ -56,6 +60,9 @@ public:
     void skipLine();
     void writeResult(const std::string& result);  // Add this method
     void initNewGame();  // Add this declaration
+    void saveTurnState(int turn, bool whiteHasMoved);
+    bool loadTurnState(int& turn, bool& whiteHasMoved) const;
+    bool hasIncompleteTurn() const;  // Keep as const, we're not modifying any members
 };
 
 #endif

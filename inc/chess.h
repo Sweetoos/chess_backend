@@ -22,6 +22,7 @@ public:
     void setupBoard();
     void displayBoard() const;
     PieceColor getCurrentTurnColor() const { return m_currentTurnColor; }
+    void setCurrentTurnColor(PieceColor color) { m_currentTurnColor = color; }
     bool handleCastling(const Position &from, const Position &to);
     PieceType handlePromotion(const Position &pos); 
     bool isSquareUnderAttack(const Position &pos, PieceColor defendingColor) const;
