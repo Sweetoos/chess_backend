@@ -16,7 +16,7 @@ private:
 
 public:
     static int turn;
-    bool movePiece(const Position &from, const Position &to);  
+    bool movePiece(const Position &from, const Position &to, bool isReplay = false);  // Add replay parameter
 
     GameManager(PieceFactory &factory) : m_factory(factory) {}
     void setupBoard();

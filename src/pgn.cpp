@@ -198,17 +198,29 @@ MoveInfo PgnNotation::getLastMove() const
 
 bool PgnNotation::hasPieceMoved(const PieceType &type, const PieceColor &color, const char &col) const
 {
-    if (type != PieceType::KING && type != PieceType::ROOK)
-    {
+    if (type != PieceType::KING && type != PieceType::ROOK) {
         return false;
     }
-    std::string key = std::string(1, col) + std::to_string(static_cast<int>(color));
-    auto it = m_pieceMoved.find(key);
-    if (it != m_pieceMoved.end())
-    {
-        return it->second;
+
+    // Use consistent key generation
+    std::string key = std::string(1, col) + std::to_string(color == PieceColor::WHITE ? 0 : 1);
+    bool hasMoved = m_pieceMoved.count(key) > 0 && m_pieceMoved.at(key);
+
+    std::cout << "DEBUG: [hasPieceMoved] Checking "
+              << (type == PieceType::KING ? "KING" : "ROOK")
+              << " at column " << col 
+              << " color " << (color == PieceColor::WHITE ? "WHITE" : "BLACK")
+              << ". Key: " << key 
+              << " MapSize: " << m_pieceMoved.size()
+              << " HasMoved: " << (hasMoved ? "true" : "false") << "\n";
+
+    // Print all tracked pieces
+    std::cout << "DEBUG: [hasPieceMoved] Movement state:\n";
+    for (const auto& [k, v] : m_pieceMoved) {
+        std::cout << "  " << k << ": " << (v ? "moved" : "not moved") << "\n";
     }
-    return false;
+
+    return hasMoved;
 }
 
 std::string PgnNotation::promotionTypeToString(PieceType type) const
@@ -312,6 +324,40 @@ bool PgnNotation::loadGame(const std::string& filename) {
     if (!m_inFile) {
         throw std::runtime_error("Failed to open " + filename + " for reading");
     }
+    
+    // Also look for and load moved pieces state
+    std::string movedPiecesLine;
+    while (std::getline(inFile, line)) {
+        if (line.starts_with("[MovedPieces \"")) {
+            movedPiecesLine = line;
+            std::cout << "DEBUG: Found moved pieces state: " << movedPiecesLine << "\n";
+            break;
+        }
+    }
+    
+    if (!movedPiecesLine.empty()) {
+        size_t start = movedPiecesLine.find("\"") + 1;
+        size_t end = movedPiecesLine.rfind("\"");
+        if (start != std::string::npos && end != std::string::npos) {
+            std::string pieces = movedPiecesLine.substr(start, end - start);
+            std::cout << "DEBUG: Parsing moved pieces: " << pieces << "\n";
+            std::stringstream ss(pieces);
+            std::string piece;
+            while (std::getline(ss, piece, ',')) {
+                m_pieceMoved[piece] = true;
+                std::cout << "DEBUG: Marked piece with key " << piece << " as moved\n";
+            }
+        }
+    }
+    
+    // Clear all movement tracking
+    m_pieceMoved.clear();
+    m_originalPositions.clear();
+    
+    std::cout << "DEBUG: [loadGame] Cleared all movement tracking\n";
+    std::cout << "DEBUG: [loadGame] Will track moves during replay\n";
+    
+    // Don't initialize any positions - we'll track them during replay
     
     return true;
 }
@@ -492,6 +538,20 @@ void PgnNotation::saveTurnState(int turn, bool whiteHasMoved) {
     content += "\n[TurnState \"" + std::to_string(turn) + "," + 
                (whiteHasMoved ? "1" : "0") + "\"]";
     
+    // Add moved pieces state to content
+    std::string movedPieces = "\n[MovedPieces \"";
+    for (const auto& [key, value] : m_pieceMoved) {
+        if (value) {
+            movedPieces += key + ",";
+            std::cout << "DEBUG: Saving moved piece state for key: " << key << "\n";
+        }
+    }
+    if (movedPieces.back() == ',') {
+        movedPieces.pop_back();
+    }
+    movedPieces += "\"]";
+    content += movedPieces;
+    
     // Write back the cleaned content
     m_outFile.open(m_fileName, std::ios::out | std::ios::trunc);
     if (!m_outFile) {
@@ -596,4 +656,44 @@ std::string PgnNotation::getPieceSymbol(PieceType type) {
         case PieceType::PAWN:   return "";
         default:                return "";
     }
+}
+
+void PgnNotation::markPieceMoved(PieceType type, PieceColor color, char col, bool isReplay)
+{
+    if (type != PieceType::KING && type != PieceType::ROOK) {
+        return;
+    }
+
+    // Generate key with correct color value (0 for white, 1 for black)
+    std::string key = std::string(1, col) + std::to_string(color == PieceColor::WHITE ? 0 : 1);
+    
+    // Only track movements from original positions
+    bool isStartingPosition = false;
+    if (type == PieceType::KING && col == 'e') {
+        isStartingPosition = true;
+    } else if (type == PieceType::ROOK && (col == 'a' || col == 'h')) {
+        isStartingPosition = true;
+    }
+
+    if (!isStartingPosition) {
+        return;  // Don't track non-starting positions
+    }
+
+    if (isReplay) {
+        // During replay, only mark as moved if we haven't tracked this piece yet
+        if (m_pieceMoved.find(key) == m_pieceMoved.end()) {
+            m_pieceMoved[key] = true;
+            std::cout << "DEBUG: [markPieceMoved] Marked piece as moved during replay: " << key << "\n";
+        }
+    } else {
+        // For actual gameplay moves
+        m_pieceMoved[key] = true;
+        std::cout << "DEBUG: [markPieceMoved] Marked piece as moved during gameplay: " << key << "\n";
+    }
+}
+
+// Add new method to clear piece movement history
+void PgnNotation::clearPieceMovementHistory() {
+    std::cout << "DEBUG: Clearing piece movement history\n";
+    m_pieceMoved.clear();
 }

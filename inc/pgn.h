@@ -8,6 +8,7 @@
 #include <vector>
 #include <array>
 #include <unordered_map>
+#include <set>
 
 struct MoveInfo {
     PieceType type;
@@ -33,6 +34,7 @@ private:
 
     /// @brief Track if the king or rook has moved
     std::unordered_map<std::string, bool> m_pieceMoved;
+    std::set<std::string> m_originalPositions;  // Track original positions of moved pieces
 
     std::string m_originalContent; // Add this line
     int m_savedTurn;
@@ -63,6 +65,18 @@ public:
     void saveTurnState(int turn, bool whiteHasMoved);
     bool loadTurnState(int& turn, bool& whiteHasMoved) const;
     bool hasIncompleteTurn() const;  // Keep as const, we're not modifying any members
+    void markPieceMoved(PieceType type, PieceColor color, char col, bool isReplay = false); // Keep only this declaration
+    void clearPieceMovementHistory();
+    void initializeOriginalPositions() {
+        m_originalPositions.clear();
+        // Add initial positions for kings and rooks
+        m_originalPositions.insert("e0"); // White king
+        m_originalPositions.insert("e1"); // Black king
+        m_originalPositions.insert("a0"); // White queenside rook
+        m_originalPositions.insert("h0"); // White kingside rook
+        m_originalPositions.insert("a1"); // Black queenside rook
+        m_originalPositions.insert("h1"); // Black kingside rook
+    }
 };
 
 #endif

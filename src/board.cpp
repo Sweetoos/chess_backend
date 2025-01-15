@@ -97,13 +97,22 @@ PieceInterface *Board::getPieceAt(const Position &position) const
     return m_grid[col][row].getPiece();
 }
 
-void Board::displayBoardConsole() const
+void Board::displayBoardConsole(PieceColor perspective) const
 {
-    std::cout << "\n  A\tB\tC\tD\tE\tF\tG\tH\n";
-    for (int r = 7; r >= 0; r--)
+    bool whiteBottom = (perspective == PieceColor::WHITE);
+    
+    // Print column headers in correct order
+    std::cout << "\n  ";
+    if (whiteBottom) {
+        std::cout << "A\tB\tC\tD\tE\tF\tG\tH\n";
+    } else {
+        std::cout << "H\tG\tF\tE\tD\tC\tB\tA\n";
+    }
+
+    for (int r = (whiteBottom ? 7 : 0); whiteBottom ? r >= 0 : r < 8; r += (whiteBottom ? -1 : 1))
     {
         std::cout << r + 1 << " ";
-        for (int c = 0; c < 8; c++)
+        for (int c = (whiteBottom ? 0 : 7); whiteBottom ? c < 8 : c >= 0; c += (whiteBottom ? 1 : -1))
         {
             PieceInterface *piece = m_grid[c][r].getPiece();
             if (piece)
@@ -113,7 +122,14 @@ void Board::displayBoardConsole() const
         }
         std::cout << r + 1 << '\n';
     }
-    std::cout << "\n  A\tB\tC\tD\tE\tF\tG\tH\n";
+
+    // Print bottom column headers
+    std::cout << "\n  ";
+    if (whiteBottom) {
+        std::cout << "A\tB\tC\tD\tE\tF\tG\tH\n";
+    } else {
+        std::cout << "H\tG\tF\tE\tD\tC\tB\tA\n";
+    }
 }
 
 void Board::Square::setPiece(PieceInterface *piece)

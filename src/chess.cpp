@@ -20,102 +20,120 @@ void Chess::run()
     std::cout << "Enter 'new' for new game or 'load' to load saved game: ";
     std::getline(std::cin, command);
 
-    if (command == "load") {
+    if (command == "load")
+    {
         auto savedGames = PgnNotation::listSavedGames();
-        if (savedGames.empty()) {
+        if (savedGames.empty())
+        {
             std::println("No saved games found.");
             return;
         }
 
         std::println("Available saved games:");
-        for (size_t i = 0; i < savedGames.size(); ++i) {
+        for (size_t i = 0; i < savedGames.size(); ++i)
+        {
             std::println("{0}: {1}", i + 1, savedGames[i]);
         }
 
         std::print("Enter game number to load: ");
         std::string selection;
         std::getline(std::cin, selection);
-        
-        try {
+
+        try
+        {
             int index = std::stoi(selection) - 1;
-            if (index >= 0 && index < static_cast<int>(savedGames.size())) {
-                if (m_gm.getPgn().loadGame(savedGames[index])) {
-                    GameManager::turn = 1; // Reset turn counter
-                    m_gm.setupBoard(); // Reset board to initial state
+            if (index >= 0 && index < static_cast<int>(savedGames.size()))
+            {
+                if (m_gm.getPgn().loadGame(savedGames[index]))
+                {
+                    GameManager::turn = 1;                       // Reset turn counter
+                    m_gm.setupBoard();                           // Reset board to initial state
                     m_gm.setCurrentTurnColor(PieceColor::WHITE); // Reset to white's turn
-                    
+                    m_gm.getPgn().clearPieceMovementHistory();   // Add this line
+
                     std::cout << "DEBUG: Starting game replay\n";
-                    
+
                     std::string line;
                     bool headerSkipped = false;
-                    
-                    while (m_gm.getPgn().readNextLine(line)) {
+
+                    while (m_gm.getPgn().readNextLine(line))
+                    {
                         // Skip header
-                        if (!headerSkipped) {
-                            if (line.starts_with("[Date")) {
+                        if (!headerSkipped)
+                        {
+                            if (line.starts_with("[Date"))
+                            {
                                 headerSkipped = true;
                                 continue;
                             }
                         }
-                        
+
                         std::cout << "DEBUG: Processing line: '" << line << "'\n";
-                        
+
                         // Skip metadata and empty lines
-                        if (line.empty() || line[0] == '[' || line.starts_with("Result")) {
+                        if (line.empty() || line[0] == '[' || line.starts_with("Result"))
+                        {
                             std::cout << "DEBUG: Skipping non-move line\n";
                             continue;
                         }
 
-                        auto moves = m_gm.getPgn().parseMovesFromFile(line);  // Remove currentTurnColor argument
+                        auto moves = m_gm.getPgn().parseMovesFromFile(line); // Remove currentTurnColor argument
                         std::cout << "DEBUG: Found " << moves.size() << " moves to replay\n";
-                        
-                        for (const auto& [from, to] : moves) {
-                            auto* piece = m_gm.getBoard().getPieceAt(from);
-                            std::cout << "DEBUG: Replaying move " << from.col << from.row 
-                                    << " to " << to.col << to.row 
-                                    << " (piece: " << (piece ? piece->getFullSymbol() : "nullptr") << ")\n";
-                            
-                            if (!piece) {
+
+                        for (const auto &[from, to] : moves)
+                        {
+                            auto *piece = m_gm.getBoard().getPieceAt(from);
+                            std::cout << "DEBUG: Replaying move " << from.col << from.row
+                                      << " to " << to.col << to.row
+                                      << " (piece: " << (piece ? piece->getFullSymbol() : "nullptr") << ")\n";
+
+                            if (!piece)
+                            {
                                 throw std::runtime_error("No piece at source position");
                             }
-                            
-                            if (!m_gm.movePiece(from, to)) {
+
+                            if (!m_gm.movePiece(from, to, true))
+                            {
                                 throw std::runtime_error("Failed to replay move");
                             }
-                            
+
                             std::cout << "DEBUG: Move replayed successfully\n";
                         }
                     }
-                    
+
                     std::cout << "DEBUG: Loading complete. Checking game state...\n";
-                    
+
                     // Load game state
                     bool whiteHasMoved;
                     int savedTurn;
-                    if (m_gm.getPgn().loadTurnState(savedTurn, whiteHasMoved)) {
+                    if (m_gm.getPgn().loadTurnState(savedTurn, whiteHasMoved))
+                    {
                         GameManager::turn = savedTurn;
                         m_gm.setCurrentTurnColor(whiteHasMoved ? PieceColor::BLACK : PieceColor::WHITE);
                     }
 
                     std::println("Game loaded successfully!");
                     m_gm.displayBoard();
-                    
-                    std::cout << "DEBUG: Final state - Turn: " << GameManager::turn 
-                             << ", Color: " << (m_gm.getCurrentTurnColor() == PieceColor::WHITE ? "WHITE" : "BLACK") 
-                             << "\n";
+
+                    std::cout << "DEBUG: Final state - Turn: " << GameManager::turn
+                              << ", Color: " << (m_gm.getCurrentTurnColor() == PieceColor::WHITE ? "WHITE" : "BLACK")
+                              << "\n";
                 }
             }
         }
-        catch (const std::exception& e) {
+        catch (const std::exception &e)
+        {
             std::println("Error loading game: {}", e.what());
             return;
         }
     }
-    else if (command == "new") {
+    else if (command == "new")
+    {
         m_gm.getPgn().initNewGame(); // Create file for new game
-        m_gm.displayBoard(); // Add this line to display the initial board state
+        m_gm.displayBoard();         // Add this line to display the initial board state
     }
-    else {
+    else
+    {
         std::println("Invalid command. Exiting...");
         return;
     }
@@ -129,14 +147,14 @@ void Chess::run()
         {
             std::print("enter move: ");
             std::getline(std::cin, move);
-            
+
             // Draw by agreement
-            if(move == "draw")
+            if (move == "draw")
             {
                 std::print("Other player, do you accept the draw? (y/n): ");
                 std::string response;
                 std::getline(std::cin, response);
-                if(response == "y" || response == "yes")
+                if (response == "y" || response == "yes")
                 {
                     std::println("Game drawn by mutual agreement!");
                     m_gm.getPgn().writeResult("1/2-1/2 (Draw by agreement)");
@@ -150,8 +168,10 @@ void Chess::run()
             }
 
             // Add save game command
-            if(move == "save") {
-                if (m_gm.getCurrentTurnColor() == PieceColor::BLACK) {
+            if (move == "save")
+            {
+                if (m_gm.getCurrentTurnColor() == PieceColor::BLACK)
+                {
                     // Mark the line as incomplete for Black's turn
                     m_gm.getPgn().appendToFile("\n");
                     // Store the current turn state
@@ -161,7 +181,8 @@ void Chess::run()
                 break;
             }
 
-            if (move.length() == 5 && move[2] == ' ') {
+            if (move.length() == 5 && move[2] == ' ')
+            {
                 char fromCol = std::tolower(move[0]);
                 int fromRow = move[1] - '0';
                 char toCol = std::tolower(move[3]);
@@ -173,16 +194,18 @@ void Chess::run()
                 Position from(fromCol, fromRow);
                 Position to(toCol, toRow);
 
-                if (m_gm.movePiece(from, to)) {
+                if (m_gm.movePiece(from, to, false))
+                {
                     m_gm.displayBoard();
-                    
+
                     // Check for insufficient material draw
-                    if (m_gm.hasInsufficientMaterial()) {
+                    if (m_gm.hasInsufficientMaterial())
+                    {
                         std::println("Draw by insufficient material!");
                         m_gm.getPgn().writeResult("1/2-1/2 (Draw by insufficient material)");
                         break;
                     }
-                    
+
                     if (m_gm.isKingInCheck(m_gm.getCurrentTurnColor()))
                         std::println("CHECK!");
 
@@ -195,41 +218,46 @@ void Chess::run()
                     }
                 }
             }
-            else {
+            else
+            {
                 throw std::invalid_argument("invalid argument, give it in format [{current position} {destination}]\n without piece notation, we will figure it out");
             }
         }
         catch (const std::exception &e)
         {
             std::cerr << "Error: " << e.what() << '\n';
-            m_gm.displayBoard(); 
+            m_gm.displayBoard();
         }
     }
 }
 
-bool GameManager::movePiece(const Position &from, const Position &to)
+bool GameManager::movePiece(const Position &from, const Position &to, bool isReplay)
 {
     auto *piece = m_board.getPieceAt(from);
 
-    if (piece == nullptr) {
+    if (piece == nullptr)
+    {
         throw std::runtime_error("No piece found at the given position");
     }
 
-    if (piece->getColor() != m_currentTurnColor)
+    if (!isReplay && piece->getColor() != m_currentTurnColor)
     {
         std::println("it's not {0}'s turn", (m_currentTurnColor == PieceColor::WHITE) ? "black" : "white");
         return false;
     }
 
-    // Handle castling
+    // Handle castling before any other moves
     if (piece->getType() == PieceType::KING && std::abs(to.col - from.col) == 2)
     {
-        std::cout << "DEBUG: Attempting king castling move\n";
+        std::cout << "DEBUG: [movePiece] Attempting castling\n";
         if (handleCastling(from, to))
         {
             m_moveType = MoveType::CASTLE;
-            std::string castleNotation = (to.col > from.col) ? "O-O" : "O-O-O";
-            m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row, castleNotation);
+            if (!isReplay)
+            {
+                std::string castleNotation = (to.col > from.col) ? "O-O" : "O-O-O";
+                m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row, castleNotation);
+            }
             m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
             if (m_currentTurnColor == PieceColor::WHITE)
                 turn++;
@@ -238,23 +266,22 @@ bool GameManager::movePiece(const Position &from, const Position &to)
         return false;
     }
 
-    // checks if the move is correct
-    MoveManager mm(&m_pgn);  
+    // Regular move handling
+    MoveManager mm(&m_pgn);
     if (!mm.isValidMove(from, to, m_board, *piece))
     {
         std::println("invalid move for {0}\n", piece->getFullSymbol());
         return false;
     }
 
-    // captures
+    // Handle captures
     PieceInterface *capturedPiece = m_board.getPieceAt(to);
     bool isCapture = capturedPiece != nullptr;
     bool isEnPassant = false;
 
-    // en passant check
+    // En passant check
     if (piece->getType() == PieceType::PAWN && !isCapture)
     {
-        MoveManager mm(&m_pgn);
         if (mm.isEnPassant(*piece, from, to, m_board))
         {
             isCapture = true;
@@ -265,57 +292,44 @@ bool GameManager::movePiece(const Position &from, const Position &to)
         }
     }
 
-    // regular capture
+    // Regular capture
     if (isCapture && !isEnPassant)
     {
         m_board.removePiece(to);
         m_moveType = MoveType::CAPTURE;
     }
 
-    // moving piece
+    // Move the piece
     m_board.removePiece(from, false);
-
-    if (piece == nullptr)
-        throw std::runtime_error("Error: Attempted to move a null piece");
-
     piece->move(to);
     m_board.putPiece(piece);
-    // pawn promotion
+
+    // Only mark pieces as moved after successful regular move
+    if (!isReplay && (piece->getType() == PieceType::KING || piece->getType() == PieceType::ROOK))
+    {
+        m_pgn.markPieceMoved(piece->getType(), piece->getColor(), from.col, false);
+    }
+
+    // Handle pawn promotion
     if (piece->getType() == PieceType::PAWN && (to.row == 1 || to.row == 8))
     {
         PieceType promotionType = handlePromotion(to);
         piece = m_board.getPieceAt(to);
-        std::string promotionNotation = std::string(1, from.col) + std::to_string(from.row) + 
-                                      " -> " + std::string(1, to.col) + std::to_string(to.row) + 
-                                      "=" + promotionTypeToString(promotionType);
-        m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row, promotionNotation);
+        std::string promotionNotation = std::string(1, from.col) + std::to_string(from.row) +
+                                        " -> " + std::string(1, to.col) + std::to_string(to.row) +
+                                        "=" + promotionTypeToString(promotionType);
+        if (!isReplay)
+        {
+            m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row, promotionNotation);
+        }
         m_moveType = MoveType::PROMOTION;
-        m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
-        if (m_currentTurnColor == PieceColor::WHITE)
-            turn++;
-        return true;  
     }
-    else
+    else if (!isReplay)
     {
-        m_moveType = isCapture ? MoveType::CAPTURE : MoveType::MOVE;
+        m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row, "");
     }
 
-    // check for check/checkmate
-    if (isKingInCheck(m_currentTurnColor == PieceColor::WHITE ? PieceColor::BLACK : PieceColor::WHITE))
-    {
-        if (isCheckmate(m_currentTurnColor == PieceColor::WHITE ? PieceColor::BLACK : PieceColor::WHITE))
-        {
-            m_moveType = MoveType::MATE;
-        }
-        else
-        {
-            m_moveType = MoveType::CHECK;
-        }
-    }
-    //std::println("moved {0} to {1}{2}",piece->getFullSymbol(),to.col,to.row);
-    m_pgn.writeTurn(piece->getColor(), piece->getType(), from.col, from.row, to.col, to.row, "");
-
-    // change turn
+    // Change turn
     m_currentTurnColor = (m_currentTurnColor == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
     if (m_currentTurnColor == PieceColor::WHITE)
         turn++;
@@ -325,34 +339,44 @@ bool GameManager::movePiece(const Position &from, const Position &to)
 
 bool GameManager::handleCastling(const Position &from, const Position &to)
 {
-    std::cout << "DEBUG: Handling castling from " << from.col << from.row 
-              << " to " << to.col << to.row << "\n";
-              
     auto *king = m_board.getPieceAt(from);
-    if (!king || king->getType() != PieceType::KING) {
-        std::cout << "DEBUG: Not a king at source position\n";
+    if (!king || king->getType() != PieceType::KING)
+    {
+        return false;
+    }
+
+    // Check initial positions and movement
+    if (from.col != 'e' ||
+        (king->getColor() == PieceColor::WHITE && from.row != 1) ||
+        (king->getColor() == PieceColor::BLACK && from.row != 8) ||
+        m_pgn.hasPieceMoved(PieceType::KING, king->getColor(), from.col))
+    {
         return false;
     }
 
     char rookCol = (to.col > from.col) ? 'h' : 'a';
     char newRookCol = (to.col > from.col) ? 'f' : 'd';
-    std::cout << "DEBUG: Rook should move from " << rookCol << " to " << newRookCol << "\n";
-
     Position rookPos(rookCol, from.row);
     auto *rook = m_board.getPieceAt(rookPos);
-    
-    if (!rook || rook->getType() != PieceType::ROOK) {
-        std::cout << "DEBUG: Not a rook at expected position " << rookCol << from.row << "\n";
+
+    if (!rook || rook->getType() != PieceType::ROOK ||
+        m_pgn.hasPieceMoved(PieceType::ROOK, king->getColor(), rookCol))
+    {
         return false;
     }
 
-    // Perform castling
-    std::cout << "DEBUG: Moving king from " << from.col << from.row 
-              << " to " << to.col << to.row << "\n";
-    std::cout << "DEBUG: Moving rook from " << rookPos.col << rookPos.row 
-              << " to " << newRookCol << rookPos.row << "\n";
+    // Check path and safety
+    int step = (to.col > from.col) ? 1 : -1;
+    for (char col = from.col + step; col != rookCol; col += step)
+    {
+        if (m_board.getPieceAt(Position(col, from.row)) ||
+            isSquareUnderAttack(Position(col, from.row), king->getColor()))
+        {
+            return false;
+        }
+    }
 
-    // Move both pieces
+    // Perform castling
     m_board.removePiece(from, false);
     m_board.removePiece(rookPos, false);
     king->move(to);
@@ -360,44 +384,15 @@ bool GameManager::handleCastling(const Position &from, const Position &to)
     m_board.putPiece(king);
     m_board.putPiece(rook);
 
+    m_pgn.markPieceMoved(PieceType::KING, king->getColor(), from.col, false);
+    m_pgn.markPieceMoved(PieceType::ROOK, king->getColor(), rookCol, false);
+
     return true;
-}
-
-PieceType GameManager::handlePromotion(const Position &pos)
-{
-    m_promotionFlag = true;
-    char promotion;
-    std::string input;
-    
-    std::cout << "Promote pawn to (Q/R/B/N): ";
-    std::getline(std::cin, input);
-    while (input.empty() || std::string("QRBN").find(std::toupper(input[0])) == std::string::npos) {
-        std::cout << "Invalid input. Promote pawn to (Q/R/B/N): ";
-        std::getline(std::cin, input);
-    }
-    promotion = std::toupper(input[0]);
-
-    PieceColor color = m_board.getPieceAt(pos)->getColor();
-    m_board.removePiece(pos, true);
-
-    PieceType newType;
-    switch (promotion)
-    {
-    case 'Q': newType = PieceType::QUEEN; break;
-    case 'R': newType = PieceType::ROOK; break;
-    case 'B': newType = PieceType::BISHOP; break;
-    case 'N': newType = PieceType::KNIGHT; break;
-    default: newType = PieceType::QUEEN; break;
-    }
-    
-    PieceInterface *newPiece = m_factory.createAndStorePiece(newType, pos, color);
-    m_board.putPiece(newPiece);
-    return newType;
 }
 
 bool GameManager::isSquareUnderAttack(const Position &pos, PieceColor defendingColor) const
 {
-    MoveManager mm(&m_pgn);  
+    MoveManager mm(&m_pgn);
     for (int row = 1; row <= 8; row++)
     {
         for (char col = 'a'; col <= 'h'; col++)
@@ -416,7 +411,7 @@ bool GameManager::isSquareUnderAttack(const Position &pos, PieceColor defendingC
 
 bool GameManager::isKingInCheck(PieceColor color) const
 {
-    Position kingPos('a', 1); 
+    Position kingPos('a', 1);
     for (int row = 1; row <= 8; row++)
     {
         for (char col = 'a'; col <= 'h'; col++)
@@ -443,10 +438,10 @@ bool GameManager::isCheckmate(PieceColor color)
                 continue;
             for (int toRow = 1; toRow <= 8; toRow++)
             {
-                for (char toCol = 'a'; toCol <= 'h'; toCol++)  // Fix syntax error here
+                for (char toCol = 'a'; toCol <= 'h'; toCol++) // Fix syntax error here
                 {
                     Position to(toCol, toRow);
-                    MoveManager mm(&m_pgn); 
+                    MoveManager mm(&m_pgn);
                     if (!mm.isValidMove(from, to, m_board, *piece))
                         continue;
                     PieceInterface *capturedPiece = m_board.getPieceAt(to);
@@ -538,7 +533,7 @@ void GameManager::setupBoard()
 
 void GameManager::displayBoard() const
 {
-    m_board.displayBoardConsole();
+    m_board.displayBoardConsole(m_currentTurnColor); // Pass current player's color
 }
 
 std::string GameManager::promotionTypeToString(PieceType type) const
@@ -558,65 +553,119 @@ std::string GameManager::promotionTypeToString(PieceType type) const
     }
 }
 
-bool GameManager::hasInsufficientMaterial() const 
+bool GameManager::hasInsufficientMaterial() const
 {
     // Case 1: Only kings
-    if (hasOnlyKing(PieceColor::WHITE) && hasOnlyKing(PieceColor::BLACK)) {
+    if (hasOnlyKing(PieceColor::WHITE) && hasOnlyKing(PieceColor::BLACK))
+    {
         return true;
     }
-    
+
     // Case 2: King and minor piece vs King
     if ((hasOnlyKing(PieceColor::WHITE) && hasOnlyKingAndMinorPiece(PieceColor::BLACK)) ||
-        (hasOnlyKing(PieceColor::BLACK) && hasOnlyKingAndMinorPiece(PieceColor::WHITE))) {
+        (hasOnlyKing(PieceColor::BLACK) && hasOnlyKingAndMinorPiece(PieceColor::WHITE)))
+    {
         return true;
     }
-    
+
     return false;
 }
 
-bool GameManager::hasOnlyKing(PieceColor color) const 
+bool GameManager::hasOnlyKing(PieceColor color) const
 {
     int pieceCount = 0;
     bool hasKing = false;
-    
-    for (int row = 1; row <= 8; row++) {
-        for (char col = 'a'; col <= 'h'; col++) {
-            PieceInterface* piece = m_board.getPieceAt(Position(col, row));
-            if (piece && piece->getColor() == color) {
+
+    for (int row = 1; row <= 8; row++)
+    {
+        for (char col = 'a'; col <= 'h'; col++)
+        {
+            PieceInterface *piece = m_board.getPieceAt(Position(col, row));
+            if (piece && piece->getColor() == color)
+            {
                 pieceCount++;
-                if (piece->getType() == PieceType::KING) {
+                if (piece->getType() == PieceType::KING)
+                {
                     hasKing = true;
                 }
             }
         }
     }
-    
+
     return hasKing && pieceCount == 1;
 }
 
-bool GameManager::hasOnlyKingAndMinorPiece(PieceColor color) const 
+bool GameManager::hasOnlyKingAndMinorPiece(PieceColor color) const
 {
     int pieceCount = 0;
     bool hasKing = false;
     bool hasMinorPiece = false;
-    
-    for (int row = 1; row <= 8; row++) {
-        for (char col = 'a'; col <= 'h'; col++) {
-            PieceInterface* piece = m_board.getPieceAt(Position(col, row));
-            if (piece && piece->getColor() == color) {
+
+    for (int row = 1; row <= 8; row++)
+    {
+        for (char col = 'a'; col <= 'h'; col++)
+        {
+            PieceInterface *piece = m_board.getPieceAt(Position(col, row));
+            if (piece && piece->getColor() == color)
+            {
                 pieceCount++;
-                if (piece->getType() == PieceType::KING) {
+                if (piece->getType() == PieceType::KING)
+                {
                     hasKing = true;
                 }
-                else if (piece->getType() == PieceType::BISHOP || 
-                         piece->getType() == PieceType::KNIGHT) {
+                else if (piece->getType() == PieceType::BISHOP ||
+                         piece->getType() == PieceType::KNIGHT)
+                {
                     hasMinorPiece = true;
                 }
             }
         }
     }
-    
+
     return hasKing && hasMinorPiece && pieceCount == 2;
 }
 
-const Board& GameManager::getBoard() const { return m_board; }
+const Board &GameManager::getBoard() const { return m_board; }
+
+PieceType GameManager::handlePromotion(const Position &pos)
+{
+    m_promotionFlag = true;
+    char promotion;
+    std::string input;
+
+    std::cout << "Promote pawn to (Q/R/B/N): ";
+    std::getline(std::cin, input);
+    while (input.empty() || std::string("QRBN").find(std::toupper(input[0])) == std::string::npos)
+    {
+        std::cout << "Invalid input. Promote pawn to (Q/R/B/N): ";
+        std::getline(std::cin, input);
+    }
+    promotion = std::toupper(input[0]);
+
+    PieceColor color = m_board.getPieceAt(pos)->getColor();
+    m_board.removePiece(pos, true);
+
+    PieceType newType;
+    switch (promotion)
+    {
+    case 'Q':
+        newType = PieceType::QUEEN;
+        break;
+    case 'R':
+        newType = PieceType::ROOK;
+        break;
+    case 'B':
+        newType = PieceType::BISHOP;
+        break;
+    case 'N':
+        newType = PieceType::KNIGHT;
+        break;
+    default:
+        newType = PieceType::QUEEN;
+        break; // Default to queen if somehow invalid
+    }
+
+    PieceInterface *newPiece = m_factory.createAndStorePiece(newType, pos, color);
+    m_board.putPiece(newPiece);
+    return newType;
+}

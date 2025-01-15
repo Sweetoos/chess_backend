@@ -33,7 +33,7 @@ public:
     void removePiece(const Position &position);
     void removePiece(const Position &position, bool deletePiece);
     PieceInterface *getPieceAt(const Position &position) const;
-    void displayBoardConsole() const;
+    void displayBoardConsole(PieceColor perspective = PieceColor::WHITE) const;  // Add perspective parameter
 
 private:
     int toIndex(char col) const;
