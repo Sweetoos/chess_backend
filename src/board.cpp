@@ -92,7 +92,7 @@ PieceInterface *Board::getPieceAt(const Position &position) const
     int row = position.row - 1;
 
     if (col < 0 || col >= 8 || row < 0 || row >= 8)
-        throw std::out_of_range("Position out of bounds");
+        throw std::out_of_range("position out of bounds");
 
     return m_grid[col][row].getPiece();
 }
@@ -101,7 +101,6 @@ void Board::displayBoardConsole(PieceColor perspective) const
 {
     bool whiteBottom = (perspective == PieceColor::WHITE);
     
-    // Print column headers in correct order
     std::cout << "\n  ";
     if (whiteBottom) {
         std::cout << "A\tB\tC\tD\tE\tF\tG\tH\n";
@@ -123,7 +122,6 @@ void Board::displayBoardConsole(PieceColor perspective) const
         std::cout << r + 1 << '\n';
     }
 
-    // Print bottom column headers
     std::cout << "\n  ";
     if (whiteBottom) {
         std::cout << "A\tB\tC\tD\tE\tF\tG\tH\n";
@@ -157,7 +155,7 @@ int Board::toIndex(char col) const
     col = std::tolower(col);
     if (col < 'a' || col > 'h')
     {
-        throw std::out_of_range("Column out of range!");
+        throw std::out_of_range("column out of range!");
     }
     return col - 'a';
 }

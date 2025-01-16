@@ -10,9 +10,8 @@ int main()
         Chess game(factory);
         game.run();
     }
-    catch(const std::exception& e)
+    catch (const std::exception &e)
     {
-        std::cerr <<"Error from main: "<< e.what() << '\n';
+        std::cerr << "error from main: " << e.what() << '\n';
     }
-
 }

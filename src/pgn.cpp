@@ -1,11 +1,11 @@
 #include "classes.h"
 #include <ctime>
 #include <sstream>
-#include <set>  // Add this include
+#include <set>
 #include "pgn.h"
 #include <filesystem>
 
-PgnNotation::PgnNotation()
+PgnNotation::PgnNotation() : m_savedTurn(1), m_whiteHasMoved(false)
 {
     namespace fs = std::filesystem;
     const std::string folderName = "games";
@@ -16,14 +16,13 @@ PgnNotation::PgnNotation()
         else
             std::cerr << "failed to create " << folderName << " folder" << '\n';
     }
-    // Remove automatic file creation from constructor
 }
 
 void PgnNotation::initNewGame()
 {
     m_fileName = assignFileName();
     openFile(m_fileName);
-    fileHeader();  // This will write the date header
+    fileHeader();
 }
 
 PgnNotation::~PgnNotation()
@@ -70,14 +69,15 @@ int PgnNotation::getCurrentTurn()
 
 void PgnNotation::appendToFile(const std::string &line)
 {
-    if (!m_outFile.is_open()) {
-        throw std::runtime_error("File is not open for writing.");
+    if (!m_outFile.is_open())
+    {
+        throw std::runtime_error("file is not open for writing.");
     }
 
-    // Clean up the content before appending
-    if (!m_originalContent.empty() && line[0] != '[') {
-        // If the last character isn't a newline and this is a new turn, add one
-        if (m_originalContent.back() != '\n' && std::isdigit(line[0])) {
+    if (!m_originalContent.empty() && line[0] != '[')
+    {
+        if (m_originalContent.back() != '\n' && std::isdigit(line[0]))
+        {
             m_outFile << '\n';
             m_originalContent += '\n';
         }
@@ -91,33 +91,31 @@ void PgnNotation::appendToFile(const std::string &line)
 void PgnNotation::writeTurn(const PieceColor &color, const PieceType &type, const char &fromCol,
                             const int &fromRow, const char &toCol, const int &toRow, const std::string &specialMove)
 {
-    try {
-        // Ensure header exists at the beginning
-        if (m_originalContent.empty()) {
+    try
+    {
+        if (m_originalContent.empty())
+        {
             fileHeader();
-            m_originalContent = "[Date \"" + getCurrentDateString() + "\"]\n\n";  // Add extra newline after header
+            m_originalContent = "[Date \"" + getCurrentDateString() + "\"]\n\n";
         }
 
-        // Format the new move
         std::string pieceSymbol = getPieceSymbol(type);
-        std::string move = specialMove.empty() ? 
-            pieceSymbol + std::string(1, fromCol) + std::to_string(fromRow) + 
-            " -> " + pieceSymbol + std::string(1, toCol) + std::to_string(toRow) :
-            specialMove;
+        std::string move = specialMove.empty() ? pieceSymbol + std::string(1, fromCol) + std::to_string(fromRow) + " -> " + pieceSymbol + std::string(1, toCol) + std::to_string(toRow) : specialMove;
 
         std::string output;
-        if (color == PieceColor::WHITE) {
-            output = std::to_string(getCurrentTurn()) + ". " + move + " | ";  // Space already added after |
-        } else {
-            // Add space after the last | when writing black's move
+        if (color == PieceColor::WHITE)
+        {
+            output = std::to_string(getCurrentTurn()) + ". " + move + " | ";
+        }
+        else
+        {
             auto lastPipePos = m_originalContent.rfind("|");
-            if (lastPipePos != std::string::npos && 
-                lastPipePos + 1 < m_originalContent.length() && 
-                m_originalContent[lastPipePos + 1] != ' ') {
-                // Insert space after pipe if it's missing
+            if (lastPipePos != std::string::npos &&
+                lastPipePos + 1 < m_originalContent.length() &&
+                m_originalContent[lastPipePos + 1] != ' ')
+            {
                 m_originalContent.insert(lastPipePos + 1, " ");
-                
-                // Update file with the space
+
                 m_outFile.close();
                 m_outFile.open(m_fileName, std::ios::out | std::ios::trunc);
                 m_outFile << m_originalContent;
@@ -126,64 +124,69 @@ void PgnNotation::writeTurn(const PieceColor &color, const PieceType &type, cons
             output = move + "\n";
         }
 
-        // Parse existing content and rebuild with proper formatting
         std::map<int, std::string> turns;
         std::istringstream iss(m_originalContent);
         std::string line;
         std::string header;
 
-        // First, get the header
-        while (std::getline(iss, line)) {
-            if (line.starts_with("[Date")) {
+        while (std::getline(iss, line))
+        {
+            if (line.starts_with("[Date"))
+            {
                 header = line;
                 break;
             }
         }
 
-        // Then process the moves
-        while (std::getline(iss, line)) {
-            if (std::isdigit(line[0])) {
+        while (std::getline(iss, line))
+        {
+            if (std::isdigit(line[0]))
+            {
                 int turnNum = std::stoi(line.substr(0, line.find('.')));
-                // Ensure there's a space after each |
                 size_t pipePos = line.find("|");
-                if (pipePos != std::string::npos && pipePos + 1 < line.length() && line[pipePos + 1] != ' ') {
+                if (pipePos != std::string::npos && pipePos + 1 < line.length() && line[pipePos + 1] != ' ')
+                {
                     line.insert(pipePos + 1, " ");
                 }
                 turns[turnNum] = line;
             }
         }
 
-        // Update or add the current turn
-        if (color == PieceColor::WHITE) {
-            turns[getCurrentTurn()] = output.substr(0, output.length() - 1); // Remove trailing space
-        } else {
+        if (color == PieceColor::WHITE)
+        {
+            turns[getCurrentTurn()] = output.substr(0, output.length() - 1); 
+        }
+        else
+        {
             auto it = turns.find(getCurrentTurn());
-            if (it != turns.end()) {
+            if (it != turns.end())
+            {
                 it->second += output;
             }
         }
 
-        // Rebuild content
         std::string newContent = header + "\n";
-        for (const auto& [turn, moveLine] : turns) {
+        for (const auto &[turn, moveLine] : turns)
+        {
             newContent += moveLine + (moveLine.back() != '\n' ? "\n" : "");
         }
 
-        // Write back to file
         m_outFile.close();
         m_outFile.open(m_fileName, std::ios::out | std::ios::trunc);
         m_outFile << newContent;
         m_outFile.flush();
-        
+
         m_originalContent = newContent;
         m_lastMove = {type, fromRow, toRow, fromCol, toCol, color};
     }
-    catch (const std::exception &e) {
+    catch (const std::exception &e)
+    {
         std::cerr << "Error in writeTurn: " << e.what() << "\n";
     }
 }
 
-std::string PgnNotation::getCurrentDateString() const {
+std::string PgnNotation::getCurrentDateString() const
+{
     std::time_t currentTime = std::time(nullptr);
     std::tm *localTime = std::localtime(&currentTime);
     std::ostringstream dateStream;
@@ -198,29 +201,13 @@ MoveInfo PgnNotation::getLastMove() const
 
 bool PgnNotation::hasPieceMoved(const PieceType &type, const PieceColor &color, const char &col) const
 {
-    if (type != PieceType::KING && type != PieceType::ROOK) {
+    if (type != PieceType::KING && type != PieceType::ROOK)
+    {
         return false;
     }
 
-    // Use consistent key generation
     std::string key = std::string(1, col) + std::to_string(color == PieceColor::WHITE ? 0 : 1);
-    bool hasMoved = m_pieceMoved.count(key) > 0 && m_pieceMoved.at(key);
-
-    std::cout << "DEBUG: [hasPieceMoved] Checking "
-              << (type == PieceType::KING ? "KING" : "ROOK")
-              << " at column " << col 
-              << " color " << (color == PieceColor::WHITE ? "WHITE" : "BLACK")
-              << ". Key: " << key 
-              << " MapSize: " << m_pieceMoved.size()
-              << " HasMoved: " << (hasMoved ? "true" : "false") << "\n";
-
-    // Print all tracked pieces
-    std::cout << "DEBUG: [hasPieceMoved] Movement state:\n";
-    for (const auto& [k, v] : m_pieceMoved) {
-        std::cout << "  " << k << ": " << (v ? "moved" : "not moved") << "\n";
-    }
-
-    return hasMoved;
+    return m_pieceMoved.count(key) > 0 && m_pieceMoved.at(key);
 }
 
 std::string PgnNotation::promotionTypeToString(PieceType type) const
@@ -240,460 +227,431 @@ std::string PgnNotation::promotionTypeToString(PieceType type) const
     }
 }
 
-std::vector<std::string> PgnNotation::listSavedGames() {
+std::vector<std::string> PgnNotation::listSavedGames()
+{
     namespace fs = std::filesystem;
     std::vector<std::string> gameFiles;
     const std::string folderName = "games";
-    
-    for (const auto& entry : fs::directory_iterator(folderName)) {
-        if (entry.path().extension() == ".txt") {
+
+    for (const auto &entry : fs::directory_iterator(folderName))
+    {
+        if (entry.path().extension() == ".txt")
+        {
             gameFiles.push_back(entry.path().filename().string());
         }
     }
     return gameFiles;
 }
 
-bool PgnNotation::loadGame(const std::string& filename) {
-    if (m_outFile.is_open()) m_outFile.close();
-    if (m_inFile.is_open()) m_inFile.close();
-    
+bool PgnNotation::loadGame(const std::string &filename)
+{
+    if (m_outFile.is_open())
+        m_outFile.close();
+    if (m_inFile.is_open())
+        m_inFile.close();
+
     m_fileName = "games/" + filename;
-    std::cout << "DEBUG: Loading game from file: " << m_fileName << "\n";
-    
-    // Read file content
+
     std::ifstream inFile(m_fileName);
-    if (!inFile) {
+    if (!inFile)
+    {
         throw std::runtime_error("Failed to open " + filename + " for reading");
     }
-    
-    // Process and clean the content
+
     std::string line;
     std::string header;
-    std::map<int, std::string> moveLines; // Use map to automatically handle duplicates
-    std::cout << "DEBUG: Starting to read file content\n";
-    
-    while (std::getline(inFile, line)) {
-        std::cout << "DEBUG: Read line: '" << line << "'\n";
-        
-        // Skip empty lines
-        if (line.empty()) continue;
+    std::map<int, std::string> moveLines;
 
-        // Handle header
-        if (line.starts_with("[Date")) {
+    while (std::getline(inFile, line))
+    {
+        if (line.empty())
+            continue;
+
+        if (line.starts_with("[Date"))
+        {
             header = line;
-            std::cout << "DEBUG: Found header: " << header << "\n";
             continue;
         }
 
-        // Skip metadata lines
-        if (line.starts_with("[") || line.starts_with("#")) {
-            std::cout << "DEBUG: Skipping metadata line\n";
+        if (line.starts_with("[") || line.starts_with("#"))
+        {
             continue;
         }
 
-        // Process move lines
-        if (std::isdigit(line[0])) {
+        if (std::isdigit(line[0]))
+        {
             size_t turnNumber = std::stoul(line.substr(0, line.find('.')));
-            moveLines[turnNumber] = line; // Map automatically replaces duplicates
-            std::cout << "DEBUG: Storing move for turn " << turnNumber << ": " << line << "\n";
+            moveLines[turnNumber] = line;
         }
     }
     inFile.close();
 
-    // Create clean content
     std::string cleanContent = header + "\n";
-    for (const auto& [turn, moveLine] : moveLines) {
+    for (const auto &[turn, moveLine] : moveLines)
+    {
         cleanContent += moveLine + "\n";
     }
 
-    std::cout << "DEBUG: Final cleaned content:\n" << cleanContent << "END CONTENT\n";
-
-    // Store cleaned content
     m_originalContent = cleanContent;
-    
-    // Reopen file for writing with cleaned content
+
     m_outFile.open(m_fileName, std::ios::out | std::ios::trunc);
-    if (!m_outFile) {
-        throw std::runtime_error("Failed to open " + filename + " for writing");
+    if (!m_outFile)
+    {
+        throw std::runtime_error("failed to open " + filename + " for writing");
     }
     m_outFile << cleanContent;
     m_outFile.flush();
-    
-    // Open for reading
+
     m_inFile.open(m_fileName);
-    if (!m_inFile) {
-        throw std::runtime_error("Failed to open " + filename + " for reading");
+    if (!m_inFile)
+    {
+        throw std::runtime_error("failed to open " + filename + " for reading");
     }
-    
-    // Also look for and load moved pieces state
+
     std::string movedPiecesLine;
-    while (std::getline(inFile, line)) {
-        if (line.starts_with("[MovedPieces \"")) {
+    while (std::getline(inFile, line))
+    {
+        if (line.starts_with("[MovedPieces \""))
+        {
             movedPiecesLine = line;
-            std::cout << "DEBUG: Found moved pieces state: " << movedPiecesLine << "\n";
             break;
         }
     }
-    
-    if (!movedPiecesLine.empty()) {
+
+    if (!movedPiecesLine.empty())
+    {
         size_t start = movedPiecesLine.find("\"") + 1;
         size_t end = movedPiecesLine.rfind("\"");
-        if (start != std::string::npos && end != std::string::npos) {
+        if (start != std::string::npos && end != std::string::npos)
+        {
             std::string pieces = movedPiecesLine.substr(start, end - start);
-            std::cout << "DEBUG: Parsing moved pieces: " << pieces << "\n";
             std::stringstream ss(pieces);
             std::string piece;
-            while (std::getline(ss, piece, ',')) {
+            while (std::getline(ss, piece, ','))
+            {
                 m_pieceMoved[piece] = true;
-                std::cout << "DEBUG: Marked piece with key " << piece << " as moved\n";
             }
         }
     }
-    
-    // Clear all movement tracking
+
     m_pieceMoved.clear();
     m_originalPositions.clear();
-    
-    std::cout << "DEBUG: [loadGame] Cleared all movement tracking\n";
-    std::cout << "DEBUG: [loadGame] Will track moves during replay\n";
-    
-    // Don't initialize any positions - we'll track them during replay
-    
+
     return true;
 }
 
-std::vector<std::pair<Position, Position>> PgnNotation::parseMovesFromFile(const std::string& line) {  // Remove currentTurnColor parameter
-    std::cout << "DEBUG: Starting to parse moves from line: '" << line << "'\n";
+std::vector<std::pair<Position, Position>> PgnNotation::parseMovesFromFile(const std::string &line)
+{ 
     std::vector<std::pair<Position, Position>> moves;
-    
-    if (line.empty() || line[0] == '[' || line[0] == '#') {
-        std::cout << "DEBUG: Skipping non-move line\n";
+
+    if (line.empty() || line[0] == '[' || line[0] == '#')
+    {
         return moves;
     }
-    
+
     size_t dotPos = line.find('.');
-    if (dotPos == std::string::npos) {
-        std::cout << "DEBUG: No turn number found\n";
+    if (dotPos == std::string::npos)
+    {
         return moves;
     }
-    
+
     std::string movesStr = line.substr(dotPos + 1);
-    std::cout << "DEBUG: Processing moves: '" << movesStr << "'\n";
-    
-    auto processCastling = [](const std::string& moveStr, PieceColor color) -> std::vector<std::pair<Position, Position>> {
+
+    auto processCastling = [](const std::string &moveStr, PieceColor color) -> std::vector<std::pair<Position, Position>>
+    {
         std::vector<std::pair<Position, Position>> castleMoves;
         int row = (color == PieceColor::WHITE) ? 1 : 8;
-        
-        if (moveStr.find("O-O-O") != std::string::npos) {
-            // Long castling (queenside)
-            std::cout << "DEBUG: Processing long castling\n";
+
+        if (moveStr.find("O-O-O") != std::string::npos)
+        {
             castleMoves.push_back({
-                Position('e', row),  // King from
-                Position('c', row)   // King to
+                Position('e', row),
+                Position('c', row) 
             });
-            // Don't add rook move - it will be handled by handleCastling
         }
-        else if (moveStr.find("O-O") != std::string::npos) {
-            // Short castling (kingside)
+        else if (moveStr.find("O-O") != std::string::npos)
+        {
             std::cout << "DEBUG: Processing short castling\n";
             castleMoves.push_back({
-                Position('e', row),  // King from
-                Position('g', row)   // King to
+                Position('e', row), 
+                Position('g', row)  
             });
-            // Don't add rook move - it will be handled by handleCastling
         }
         return castleMoves;
     };
-    
-    auto processMove = [](const std::string& moveStr) -> std::pair<Position, Position> {
-        std::cout << "DEBUG: Processing move: '" << moveStr << "'\n";
-        
-        // Skip empty or special moves
-        if (moveStr.empty() || moveStr.find("O-O") != std::string::npos) {
+
+    auto processMove = [](const std::string &moveStr) -> std::pair<Position, Position>
+    {
+
+        if (moveStr.empty() || moveStr.find("O-O") != std::string::npos)
+        {
             return std::make_pair(Position('\0', 0), Position('\0', 0));
         }
-        
+
         size_t arrowPos = moveStr.find("->");
-        if (arrowPos == std::string::npos) {
-            std::cout << "DEBUG: No arrow found\n";
+        if (arrowPos == std::string::npos)
+        {
             return std::make_pair(Position('\0', 0), Position('\0', 0));
         }
-        
+
         std::string fromStr = moveStr.substr(0, arrowPos);
         std::string toStr = moveStr.substr(arrowPos + 2);
-        
-        // Clean up strings
+
         fromStr.erase(0, fromStr.find_first_not_of(" \t\r\n"));
         fromStr.erase(fromStr.find_last_not_of(" \t\r\n") + 1);
         toStr.erase(0, toStr.find_first_not_of(" \t\r\n"));
         toStr.erase(toStr.find_last_not_of(" \t\r\n") + 1);
-        
-        // Remove piece symbols
-        if (!fromStr.empty() && std::string("KQRBN").find(fromStr[0]) != std::string::npos) {
+
+        if (!fromStr.empty() && std::string("KQRBN").find(fromStr[0]) != std::string::npos)
+        {
             fromStr = fromStr.substr(1);
         }
-        if (!toStr.empty() && std::string("KQRBN").find(toStr[0]) != std::string::npos) {
+        if (!toStr.empty() && std::string("KQRBN").find(toStr[0]) != std::string::npos)
+        {
             toStr = toStr.substr(1);
         }
-        
-        std::cout << "DEBUG: Cleaned moves - From: '" << fromStr << "', To: '" << toStr << "'\n";
-        
-        if (fromStr.length() >= 2 && toStr.length() >= 2) {
+
+        if (fromStr.length() >= 2 && toStr.length() >= 2)
+        {
             return std::make_pair(
                 Position(fromStr[0], fromStr[1] - '0'),
-                Position(toStr[0], toStr[1] - '0')
-            );
+                Position(toStr[0], toStr[1] - '0'));
         }
-        
+
         return std::make_pair(Position('\0', 0), Position('\0', 0));
     };
-    
-    // Split and process moves
+
     size_t pipePos = movesStr.find('|');
-    if (pipePos != std::string::npos) {
+    if (pipePos != std::string::npos)
+    {
         std::string whiteMove = movesStr.substr(0, pipePos);
-        std::cout << "DEBUG: Processing white move: '" << whiteMove << "'\n";
-        
-        // Check for castling first
-        if (whiteMove.find("O-O") != std::string::npos) {
+
+        if (whiteMove.find("O-O") != std::string::npos)
+        {
             auto castleMoves = processCastling(whiteMove, PieceColor::WHITE);
             moves.insert(moves.end(), castleMoves.begin(), castleMoves.end());
-        } else {
+        }
+        else
+        {
             auto whiteRegularMove = processMove(whiteMove);
-            if (whiteRegularMove.first.col != '\0') {
+            if (whiteRegularMove.first.col != '\0')
+            {
                 moves.push_back(whiteRegularMove);
             }
         }
-        
-        // Process black's move if it exists
-        if (pipePos + 1 < movesStr.length()) {
+
+        if (pipePos + 1 < movesStr.length())
+        {
             std::string blackMove = movesStr.substr(pipePos + 1);
-            std::cout << "DEBUG: Processing black move: '" << blackMove << "'\n";
-            
-            if (blackMove.find("O-O") != std::string::npos) {
+
+            if (blackMove.find("O-O") != std::string::npos)
+            {
                 auto castleMoves = processCastling(blackMove, PieceColor::BLACK);
                 moves.insert(moves.end(), castleMoves.begin(), castleMoves.end());
-            } else {
+            }
+            else
+            {
                 auto blackRegularMove = processMove(blackMove);
-                if (blackRegularMove.first.col != '\0') {
+                if (blackRegularMove.first.col != '\0')
+                {
                     moves.push_back(blackRegularMove);
                 }
             }
         }
     }
-    
-    std::cout << "DEBUG: Parsed " << moves.size() << " moves (including castling)\n";
+
     return moves;
 }
 
-bool PgnNotation::readNextLine(std::string& line) {
+bool PgnNotation::readNextLine(std::string &line)
+{
     return std::getline(m_inFile, line).good();
 }
 
-void PgnNotation::skipLine() {
+void PgnNotation::skipLine()
+{
     std::string dummy;
     std::getline(m_inFile, dummy);
 }
 
-void PgnNotation::writeResult(const std::string& result) {
-    if (m_outFile.is_open()) {
+void PgnNotation::writeResult(const std::string &result)
+{
+    if (m_outFile.is_open())
+    {
         m_outFile << "\nResult: " << result << "\n";
         m_outFile.flush();
     }
 }
 
-void PgnNotation::saveTurnState(int turn, bool whiteHasMoved) {
-    m_savedTurn = turn;
-    m_whiteHasMoved = whiteHasMoved;
-    
-    // Ensure we're writing to a clean state
-    m_outFile.close();
-    
-    // Clean up the content first
-    std::string content;
-    std::set<std::string> uniqueMoves;
-    std::istringstream iss(m_originalContent);
-    std::string line;
+void PgnNotation::saveTurnState(int turn, bool whiteHasMoved) 
+{
+    try
+    {
+        if (m_outFile.is_open())
+        {
+            m_outFile.close();
+        }
+        if (m_inFile.is_open())
+        {
+            m_inFile.close();
+        }
 
-    // First, collect unique moves and header
-    while (std::getline(iss, line)) {
-        if (line.starts_with("[Date")) {
-            content = line + "\n";
-            continue;
+        std::string content = m_originalContent;
+        content += "\n[TurnState \"" + std::to_string(turn) + "," + (whiteHasMoved ? "1" : "0") + "\"]";
+
+        if (!m_pieceMoved.empty())
+        {
+            std::string pieces;
+            for (const auto &[key, value] : m_pieceMoved)
+            {
+                if (value)
+                {
+                    if (!pieces.empty())
+                        pieces += ",";
+                    pieces += key;
+                }
+            }
+            if (!pieces.empty())
+            {
+                content += "\n[MovedPieces \"" + pieces + "\"]";
+            }
         }
-        if (line.empty() || line.starts_with("[") || line.starts_with("#")) {
-            continue;
+
+        std::string tempFile = m_fileName + ".tmp";
+        std::ofstream tempOut(tempFile);
+        if (!tempOut)
+        {
+            throw std::runtime_error("failed to create temporary file");
         }
-        if (std::isdigit(line[0]) && uniqueMoves.insert(line).second) {
-            content += line + "\n";
+        tempOut << content;
+        tempOut.close();
+
+        if (std::rename(tempFile.c_str(), m_fileName.c_str()) != 0)
+        {
+            throw std::runtime_error("failed to save game state");
         }
+
+        m_originalContent = content;
     }
-    
-    // Remove any trailing whitespace
-    while (!content.empty() && std::isspace(content.back())) {
-        content.pop_back();
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error saving game state: " << e.what() << '\n';
     }
-    
-    // Add the new TurnState
-    content += "\n[TurnState \"" + std::to_string(turn) + "," + 
-               (whiteHasMoved ? "1" : "0") + "\"]";
-    
-    // Add moved pieces state to content
-    std::string movedPieces = "\n[MovedPieces \"";
-    for (const auto& [key, value] : m_pieceMoved) {
-        if (value) {
-            movedPieces += key + ",";
-            std::cout << "DEBUG: Saving moved piece state for key: " << key << "\n";
-        }
-    }
-    if (movedPieces.back() == ',') {
-        movedPieces.pop_back();
-    }
-    movedPieces += "\"]";
-    content += movedPieces;
-    
-    // Write back the cleaned content
-    m_outFile.open(m_fileName, std::ios::out | std::ios::trunc);
-    if (!m_outFile) {
-        throw std::runtime_error("Failed to open file for writing");
-    }
-    
-    m_outFile << content;
-    m_outFile.flush();
-    
-    // Update original content
-    m_originalContent = content;
 }
 
-bool PgnNotation::loadTurnState(int& turn, bool& whiteHasMoved) const {
-    // Look for the turn state in the original content
+bool PgnNotation::loadTurnState(int &turn, bool &whiteHasMoved) const 
+{
     size_t pos = m_originalContent.rfind("[TurnState \"");
-    if (pos != std::string::npos) {
+    if (pos != std::string::npos)
+    {
         std::string stateLine = m_originalContent.substr(pos);
         size_t comma = stateLine.find(',');
         size_t quote = stateLine.find('\"');
-        if (comma != std::string::npos && quote != std::string::npos) {
-            try {
+        if (comma != std::string::npos && quote != std::string::npos)
+        {
+            try
+            {
                 turn = std::stoi(stateLine.substr(quote + 1, comma - (quote + 1)));
                 whiteHasMoved = (stateLine[comma + 1] == '1');
                 return true;
-            } catch (...) {
-                // Parse error, ignore
+            }
+            catch (...)
+            {
             }
         }
     }
     return false;
 }
 
-// Replace hasIncompleteTurn implementation:
-bool PgnNotation::hasIncompleteTurn() const {
-    // We'll go line by line from the end of the file
+bool PgnNotation::hasIncompleteTurn() const
+{
     std::istringstream iss(m_originalContent);
     std::string lastValidLine;
     std::string line;
-    
-    while (std::getline(iss, line)) {
-        // Skip empty lines and metadata
-        if (line.empty() || line[0] == '[' || line.starts_with("#") || line.starts_with("Result")) {
+
+    while (std::getline(iss, line))
+    {
+        if (line.empty() || line[0] == '[' || line.starts_with("#") || line.starts_with("Result"))
+        {
             continue;
         }
         lastValidLine = line;
     }
-    
-    std::cout << "DEBUG: Final line found: '" << lastValidLine << "'\n";
-    
-    // Check if line contains a turn number
+
     size_t dotPos = lastValidLine.find('.');
-    if (dotPos == std::string::npos) {
-        std::cout << "DEBUG: No turn number found\n";
+    if (dotPos == std::string::npos)
+    {
         return false;
     }
-    
-    try {
+
+    try
+    {
         int turnNum = std::stoi(lastValidLine.substr(0, dotPos));
-        std::cout << "DEBUG: Turn number: " << turnNum << "\n";
-        
-        // Look for white's move
+
         size_t arrowPos = lastValidLine.find("->");
-        if (arrowPos == std::string::npos) {
-            std::cout << "DEBUG: No move found\n";
+        if (arrowPos == std::string::npos)
+        {
             return false;
         }
-        
-        // Look for separator and check what comes after it
+
         size_t pipePos = lastValidLine.find("|");
-        std::cout << "DEBUG: Pipe position: " << (pipePos == std::string::npos ? "not found" : std::to_string(pipePos)) << "\n";
-        
-        if (pipePos != std::string::npos) {
-            // Check what comes after the pipe
+
+        if (pipePos != std::string::npos)
+        {
             std::string afterPipe = lastValidLine.substr(pipePos + 1);
-            // Trim whitespace
             afterPipe.erase(0, afterPipe.find_first_not_of(" \t\r\n"));
             afterPipe.erase(afterPipe.find_last_not_of(" \t\r\n") + 1);
-            
-            std::cout << "DEBUG: Content after pipe: '" << afterPipe << "'\n";
-            
-            // If there's nothing meaningful after the pipe, it's an incomplete turn
+
+
             return afterPipe.empty() || afterPipe.find("->") == std::string::npos;
         }
-        
-        return true; // No pipe found but move exists = incomplete turn
-        
-    } catch (...) {
-        std::cout << "DEBUG: Failed to parse turn number\n";
+
+        return true; 
+    }
+    catch (...)
+    {
         return false;
     }
 }
 
-// Add this helper method
-std::string PgnNotation::getPieceSymbol(PieceType type) {
-    switch (type) {
-        case PieceType::KING:   return "K";
-        case PieceType::QUEEN:  return "Q";
-        case PieceType::ROOK:   return "R";
-        case PieceType::BISHOP: return "B";
-        case PieceType::KNIGHT: return "N";
-        case PieceType::PAWN:   return "";
-        default:                return "";
+std::string PgnNotation::getPieceSymbol(PieceType type)
+{
+    switch (type)
+    {
+    case PieceType::KING:
+        return "K";
+    case PieceType::QUEEN:
+        return "Q";
+    case PieceType::ROOK:
+        return "R";
+    case PieceType::BISHOP:
+        return "B";
+    case PieceType::KNIGHT:
+        return "N";
+    case PieceType::PAWN:
+        return "";
+    default:
+        return "";
     }
 }
 
-void PgnNotation::markPieceMoved(PieceType type, PieceColor color, char col, bool isReplay)
+void PgnNotation::markPieceMoved(PieceType type, PieceColor color, char col, bool /* isReplay */)
 {
-    if (type != PieceType::KING && type != PieceType::ROOK) {
+    if (type != PieceType::KING && type != PieceType::ROOK)
+    {
         return;
     }
 
-    // Generate key with correct color value (0 for white, 1 for black)
     std::string key = std::string(1, col) + std::to_string(color == PieceColor::WHITE ? 0 : 1);
-    
-    // Only track movements from original positions
-    bool isStartingPosition = false;
-    if (type == PieceType::KING && col == 'e') {
-        isStartingPosition = true;
-    } else if (type == PieceType::ROOK && (col == 'a' || col == 'h')) {
-        isStartingPosition = true;
-    }
 
-    if (!isStartingPosition) {
-        return;  // Don't track non-starting positions
-    }
-
-    if (isReplay) {
-        // During replay, only mark as moved if we haven't tracked this piece yet
-        if (m_pieceMoved.find(key) == m_pieceMoved.end()) {
-            m_pieceMoved[key] = true;
-            std::cout << "DEBUG: [markPieceMoved] Marked piece as moved during replay: " << key << "\n";
-        }
-    } else {
-        // For actual gameplay moves
+    if ((type == PieceType::KING && col == 'e') ||
+        (type == PieceType::ROOK && (col == 'a' || col == 'h')))
+    {
         m_pieceMoved[key] = true;
-        std::cout << "DEBUG: [markPieceMoved] Marked piece as moved during gameplay: " << key << "\n";
     }
 }
 
-// Add new method to clear piece movement history
-void PgnNotation::clearPieceMovementHistory() {
-    std::cout << "DEBUG: Clearing piece movement history\n";
+void PgnNotation::clearPieceMovementHistory()
+{
     m_pieceMoved.clear();
 }

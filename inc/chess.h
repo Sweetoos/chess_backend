@@ -14,9 +14,11 @@ private:
     PgnNotation m_pgn;  
     bool m_promotionFlag = false;
 
+    bool wouldMoveExposeKingToCheck(const Position &from, const Position &to, PieceColor kingColor);
+
 public:
     static int turn;
-    bool movePiece(const Position &from, const Position &to, bool isReplay = false);  // Add replay parameter
+    bool movePiece(const Position &from, const Position &to, bool isReplay = false);  
 
     GameManager(PieceFactory &factory) : m_factory(factory) {}
     void setupBoard();
@@ -34,12 +36,10 @@ public:
     void resetPromotionFlag() { m_promotionFlag = false; }
     bool getPromotionFlag() const { return m_promotionFlag; }
 
-    // Add these new methods:
     bool hasInsufficientMaterial() const;
     bool hasOnlyKing(PieceColor color) const;
     bool hasOnlyKingAndMinorPiece(PieceColor color) const;
 
-    // Add this new method
     const Board& getBoard() const;
 };
 

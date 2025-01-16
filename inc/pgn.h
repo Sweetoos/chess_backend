@@ -32,18 +32,24 @@ private:
     /// @brief <piece, piece color, last move starting position, last move destination>
     MoveInfo m_lastMove;
 
-    /// @brief Track if the king or rook has moved
+    /// @brief track if the king or rook has moved
     std::unordered_map<std::string, bool> m_pieceMoved;
-    std::set<std::string> m_originalPositions;  // Track original positions of moved pieces
+    std::set<std::string> m_originalPositions;  
 
-    std::string m_originalContent; // Add this line
+    std::string m_originalContent; 
     int m_savedTurn;
     bool m_whiteHasMoved;
-    std::string getCurrentDateString() const;  // Add this helper method
-    std::string getPieceSymbol(PieceType type);  // Add this declaration
+    std::string getCurrentDateString() const;  
+    std::string getPieceSymbol(PieceType type);
 
 public:
+    void setSavedTurn(int turn) { m_savedTurn = turn; }
+    void setWhiteHasMoved(bool hasMoved) { m_whiteHasMoved = hasMoved; }
+    int getSavedTurn() const { return m_savedTurn; }
+    bool getWhiteHasMoved() const { return m_whiteHasMoved; }
+
     PgnNotation();
+
     ~PgnNotation();
     std::string assignFileName();
     void openFile(const std::string &fileName);
@@ -56,20 +62,21 @@ public:
     bool hasPieceMoved(const PieceType &type, const PieceColor &color, const char &col) const;
     std::string promotionTypeToString(PieceType type) const;  
     bool loadGame(const std::string& filename);
-    std::vector<std::pair<Position, Position>> parseMovesFromFile(const std::string& line);  // Remove currentTurnColor parameter
+    std::vector<std::pair<Position, Position>> parseMovesFromFile(const std::string& line);  
     static std::vector<std::string> listSavedGames();
     bool readNextLine(std::string& line);
     void skipLine();
-    void writeResult(const std::string& result);  // Add this method
-    void initNewGame();  // Add this declaration
-    void saveTurnState(int turn, bool whiteHasMoved);
-    bool loadTurnState(int& turn, bool& whiteHasMoved) const;
-    bool hasIncompleteTurn() const;  // Keep as const, we're not modifying any members
-    void markPieceMoved(PieceType type, PieceColor color, char col, bool isReplay = false); // Keep only this declaration
+    void writeResult(const std::string& result);  
+    void initNewGame();  
+    void saveTurnState(int turn, bool whiteHasMoved);  
+    bool loadTurnState(int& turn, bool& whiteHasMoved) const;  
+    bool hasIncompleteTurn() const;  
+    void markPieceMoved(PieceType type, PieceColor color, char col, bool isReplay = false); 
     void clearPieceMovementHistory();
     void initializeOriginalPositions() {
+        // those are flags for tagging that kings or rooks moved from their starting positions
+        // it's for castling
         m_originalPositions.clear();
-        // Add initial positions for kings and rooks
         m_originalPositions.insert("e0"); // White king
         m_originalPositions.insert("e1"); // Black king
         m_originalPositions.insert("a0"); // White queenside rook
