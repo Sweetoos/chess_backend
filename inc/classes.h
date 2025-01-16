@@ -12,12 +12,34 @@ enum class BoardColor
     BLACK
 };
 
+enum class PieceType
+{
+    PAWN,
+    BISHOP,
+    KING,
+    KNIGHT,
+    QUEEN,
+    ROOK
+};
+
+enum class MoveType
+{
+    MOVE,
+    CAPTURE,
+    CHECK,
+    MATE,
+    PROMOTION,
+    CASTLE
+};
+
 struct Position
 {
     char col;
     int row;
     Position(char col, int row) : col(col), row(row) {}
 };
+
+
 
 #include "piece.h"
 #include "board.h"
@@ -27,6 +49,7 @@ struct Position
 #include "knight.h"
 #include "pawn.h"
 #include "rook.h"
+#include "pgn.h"
 #include "factory.h"
 #include "chess.h"
 

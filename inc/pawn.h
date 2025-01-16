@@ -6,12 +6,12 @@ class Pawn : public PieceInterface
 {
 public:
     Pawn(PieceColor color, const Position &position)
-        : PieceInterface(color, 1, "", position) {}
-    void move(const Position &target) { m_position = target; }
-    void capture(const Position &target) { m_position = target; }
-    const Position &getPosition() const { return m_position; }
-    const PieceColor &getColor() const { return m_color; }
-    int getValue() const { return m_value; }
-    std::string getSymbol() const { return m_symbol; }
-    bool canJump() const { return false; }
+        : PieceInterface(color, 1, "", position, PieceType::PAWN) {}
+    void move(const Position &target) override { m_position = target; }
+    void capture(const Position &target) override { m_position = target; }
+    const Position &getPosition() const override { return m_position; }
+    const PieceColor &getColor() const override { return m_color; }
+    int getValue() const override { return m_value; }
+    std::string getSymbol() const override { return m_symbol; }
+    PieceType getType() const override { return m_type; }
 };

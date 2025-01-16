@@ -16,4 +16,7 @@ std::ostream &operator<<(std::ostream &os, const PieceColor &color)
     return os;
 }
 
-
+const std::string PieceInterface::getFullSymbol() const
+{
+    return (m_color == PieceColor::WHITE ? "W" : "B") + m_symbol;
+}

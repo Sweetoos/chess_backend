@@ -17,9 +17,40 @@ Board::Board()
     }
 }
 
-Board::~Board()
-{
-    // not needed for m_grid deletion
+Board::Board(const Board& other) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            m_grid[i][j] = other.m_grid[i][j];
+            PieceInterface* piece = other.m_grid[i][j].getPiece();
+            if (piece) {
+                m_grid[i][j].setPiece(piece);
+            }
+        }
+    }
+}
+
+Board& Board::operator=(const Board& other) {
+    if (this != &other) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                PieceInterface* piece = m_grid[i][j].getPiece();
+                if (piece) {
+                    delete piece;
+                }
+            }
+        }
+        
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                m_grid[i][j] = other.m_grid[i][j];
+                PieceInterface* piece = other.m_grid[i][j].getPiece();
+                if (piece) {
+                    m_grid[i][j].setPiece(piece);
+                }
+            }
+        }
+    }
+    return *this;
 }
 
 void Board::putPiece(PieceInterface *piece)
@@ -41,20 +72,46 @@ void Board::removePiece(const Position &position)
     }
 }
 
+void Board::removePiece(const Position &position, bool deletePiece)
+{
+    int col = toIndex(position.col);
+    int row = position.row - 1;
+    PieceInterface *piece = m_grid[col][row].getPiece();
+    if (piece)
+    {
+        if (deletePiece)
+            delete piece;
+        m_grid[col][row].clearPiece();
+    }
+    void removePiece(const Position &position);
+}
+
 PieceInterface *Board::getPieceAt(const Position &position) const
 {
     int col = toIndex(position.col);
     int row = position.row - 1;
+
+    if (col < 0 || col >= 8 || row < 0 || row >= 8)
+        throw std::out_of_range("position out of bounds");
+
     return m_grid[col][row].getPiece();
 }
 
-void Board::displayBoardConsole() const
+void Board::displayBoardConsole(PieceColor perspective) const
 {
-    std::cout << "\n   A\tB\tC\tD\tE\tF\tG\tH\n";
-    for (int r = 7; r >= 0; r--)
+    bool whiteBottom = (perspective == PieceColor::WHITE);
+    
+    std::cout << "\n  ";
+    if (whiteBottom) {
+        std::cout << "A\tB\tC\tD\tE\tF\tG\tH\n";
+    } else {
+        std::cout << "H\tG\tF\tE\tD\tC\tB\tA\n";
+    }
+
+    for (int r = (whiteBottom ? 7 : 0); whiteBottom ? r >= 0 : r < 8; r += (whiteBottom ? -1 : 1))
     {
-        std::cout << r + 1 << " "; 
-        for (int c = 0; c < 8; c++)
+        std::cout << r + 1 << " ";
+        for (int c = (whiteBottom ? 0 : 7); whiteBottom ? c < 8 : c >= 0; c += (whiteBottom ? 1 : -1))
         {
             PieceInterface *piece = m_grid[c][r].getPiece();
             if (piece)
@@ -64,7 +121,13 @@ void Board::displayBoardConsole() const
         }
         std::cout << r + 1 << '\n';
     }
-    std::cout << "\n   A\tB\tC\tD\tE\tF\tG\tH\n";
+
+    std::cout << "\n  ";
+    if (whiteBottom) {
+        std::cout << "A\tB\tC\tD\tE\tF\tG\tH\n";
+    } else {
+        std::cout << "H\tG\tF\tE\tD\tC\tB\tA\n";
+    }
 }
 
 void Board::Square::setPiece(PieceInterface *piece)
@@ -89,9 +152,10 @@ BoardColor Board::Square::getColor() const
 
 int Board::toIndex(char col) const
 {
+    col = std::tolower(col);
     if (col < 'a' || col > 'h')
     {
-        throw std::out_of_range("Column out of range!");
+        throw std::out_of_range("column out of range!");
     }
     return col - 'a';
 }

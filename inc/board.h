@@ -22,16 +22,18 @@ public:
     };
 
 private:
-    std::array<std::array<Square,8>,8> m_grid;
+    std::array<std::array<Square, 8>, 8> m_grid;
 
 public:
     Board();
-    ~Board();
+    Board(const Board& other); 
+    Board& operator=(const Board& other); 
 
     void putPiece(PieceInterface *piece);
     void removePiece(const Position &position);
+    void removePiece(const Position &position, bool deletePiece);
     PieceInterface *getPieceAt(const Position &position) const;
-    void displayBoardConsole() const;
+    void displayBoardConsole(PieceColor perspective = PieceColor::WHITE) const;  
 
 private:
     int toIndex(char col) const;

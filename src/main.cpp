@@ -1,5 +1,6 @@
 #include <iostream>
 #include "classes.h"
+#include <print>
 
 int main()
 {
@@ -9,9 +10,8 @@ int main()
         Chess game(factory);
         game.run();
     }
-    catch(const std::exception& e)
+    catch (const std::exception &e)
     {
-        std::cerr <<"Error: "<< e.what() << '\n';
+        std::cerr << "error from main: " << e.what() << '\n';
     }
-
 }
