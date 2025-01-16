@@ -15,6 +15,7 @@ private:
     bool m_promotionFlag = false;
 
     bool wouldMoveExposeKingToCheck(const Position &from, const Position &to, PieceColor kingColor);
+    bool hasLegalMoves(PieceColor color);  
 
 public:
     static int turn;
@@ -30,6 +31,7 @@ public:
     bool isSquareUnderAttack(const Position &pos, PieceColor defendingColor) const;
     bool isKingInCheck(PieceColor color) const;
     bool isCheckmate(PieceColor color);
+    bool isStalemate(PieceColor color);  
     bool isFirstMove(const PieceInterface *piece);
     PgnNotation& getPgn() { return m_pgn; }  
     std::string promotionTypeToString(PieceType type) const;  
