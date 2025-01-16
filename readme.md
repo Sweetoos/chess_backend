@@ -2,13 +2,10 @@
 
 ___
 
-# To add
+This is a Chess project for university
 
-- moving
-- capturing
-- castle
-- check
-- mate
-- winning condition
-- en passant
-- promotion
+# What I used
+
+- CMake
+- C++23
+- Ninja-build
