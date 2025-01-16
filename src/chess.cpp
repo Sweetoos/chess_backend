@@ -176,6 +176,13 @@ void Chess::run()
                 {
                     m_gm.displayBoard();
 
+                    // Check for stalemate first
+                    if (m_gm.isStalemate(m_gm.getCurrentTurnColor())) {
+                        std::println("Stalemate! Game is a draw!");
+                        m_gm.getPgn().writeResult("1/2-1/2 (Stalemate)");
+                        break;
+                    }
+
                     // check if game is over
                     if (m_gm.isCheckmate(m_gm.getCurrentTurnColor())) {
                         std::string winner = (m_gm.getCurrentTurnColor() == PieceColor::BLACK) ? "White" : "Black";
@@ -350,6 +357,12 @@ bool GameManager::movePiece(const Position &from, const Position &to, bool isRep
             m_pgn.writeResult(winner == "White" ? "1-0" : "0-1");
             
         }
+    }
+
+    if (isStalemate(m_currentTurnColor)) {
+        std::println("Stalemate! Game is a draw!");
+        m_pgn.writeResult("1/2-1/2 (Stalemate)");
+        return true;
     }
 
     return true;
@@ -685,4 +698,38 @@ PieceType GameManager::handlePromotion(const Position &pos)
     PieceInterface *newPiece = m_factory.createAndStorePiece(newType, pos, color);
     m_board.putPiece(newPiece);
     return newType;
+}
+
+bool GameManager::hasLegalMoves(PieceColor color) {
+    MoveManager mm(&m_pgn);
+    
+    for (int fromRow = 1; fromRow <= 8; fromRow++) {
+        for (char fromCol = 'a'; fromCol <= 'h'; fromCol++) {
+            Position from(fromCol, fromRow);
+            PieceInterface* piece = m_board.getPieceAt(from);
+            
+            if (!piece || piece->getColor() != color) {
+                continue;
+            }
+
+            for (int toRow = 1; toRow <= 8; toRow++) {
+                for (char toCol = 'a'; toCol <= 'h'; toCol++) {
+                    Position to(toCol, toRow);
+                    
+                    if (!mm.isValidMove(from, to, m_board, *piece)) {
+                        continue;
+                    }
+                    
+                    if (!wouldMoveExposeKingToCheck(from, to, color)) {
+                        return true;  
+                    }
+                }
+            }
+        }
+    }
+    return false; 
+}
+
+bool GameManager::isStalemate(PieceColor color) {
+    return !isKingInCheck(color) && !hasLegalMoves(color);
 }
